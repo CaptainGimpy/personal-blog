@@ -148,6 +148,36 @@ main {
     margin: 3rem 0;
 }
 
+/* Tags filter */
+.tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.tag-btn {
+    font-family: var(--font-pixel);
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    border: 2px solid var(--border);
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 0;
+}
+.tag-btn:hover {
+    border-color: var(--neon-magenta);
+    color: var(--neon-magenta);
+}
+.tag-btn.active {
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 10px var(--neon-cyan);
+}
+
 .article-card {
     background: var(--bg-panel);
     border: 2px solid var(--border);
