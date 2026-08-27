@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Model Benchmark — Qwen3.5:9b vs Ministral 8B vs Ministral 14B</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e8;
+    line-height: 1.7;
+    padding: 0;
+  }
+  .container { max-width: 1000px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  .header {
+    border-bottom: 1px solid #1e1e2a;
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #22c55e, #eab308);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .header .subtitle { color: #888; font-size: 0.9rem; }
+  .header .timestamp { color: #666; font-size: 0.8rem; margin-top: 8px; }
+
+  .env-block {
+    background: #12121e;
+    border: 1px solid #1e1e2e;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+  }
+  .env-block h3 { color: #eab308; font-size: 0.95rem; margin-bottom: 8px; }
+  .env-block p, .env-block li { color: #aaa; font-size: 0.85rem; }
+  .env-block ul { padding-left: 20px; }
+
+  /* Summary cards */
+  .model-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 700px) { .model-summary { grid-template-columns: 1fr; } }
+  .ms-card {
+    background: #12121e;
+    border: 1px solid var(--accent, #333);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .ms-card h3 { font-size: 1rem; margin-bottom: 4px; color: var(--accent, #fff); }
+  .ms-card .score-big { font-size: 2.5rem; font-weight: 700; margin: 8px 0; }
+  .ms-card .stat-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .ms-card .stat { font-size: 0.82rem; color: #aaa; }
+  .ms-card .stat strong { color: #ddd; }
+
+  .section h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #eab308;
+    margin: 32px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e1e2a;
+  }
+
+  .test-card {
+    margin-bottom: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .test-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #12121e;
+    border: 1px solid #1e1e2e;
+    cursor: default;
+  }
+  .test-header .id { font-weight: 700; color: #888; font-size: 0.8rem; min-width: 40px; }
+  .test-header .name { flex: 1; color: #ddd; font-size: 0.9rem; margin-left: 12px; }
+  .test-header .category {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #1e1e2e;
+    color: #888;
+  }
+  .test-header .verdict {
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 70px;
+    text-align: right;
+  }
+  .verdict-pass { color: #22c55e; }
+  .verdict-fail { color: #ef4444; }
+  .verdict-partial { color: #eab308; }
+
+  .test-body {
+    background: #0e0e18;
+    border: 1px solid #1e1e2e;
+    border-top: none;
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 600px) { .test-body { grid-template-columns: 1fr; } }
+  .test-half h4 { font-size: 0.8rem; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .test-half p, .test-half li { font-size: 0.82rem; color: #aaa; }
+  .test-half ul { padding-left: 16px; list-style: none; }
+  .test-half ul li::before { content: "· "; color: #555; }
+  .test-half .pass { color: #86efac; }
+  .test-half .fail { color: #fca5a5; }
+  .test-half .note { color: #fde68a; }
+  .test-half .time { color: #93c5fd; }
+
+  .pass-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: #1e1e2e;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  .pass-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s;
+  }
+
+  .fail-mode-list {
+    margin-top: 24px;
+  }
+  .fail-mode {
+    background: #1a0a0a;
+    border-left: 3px solid #ef4444;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 0 8px 8px 0;
+  }
+  .fail-mode h4 { color: #f87171; font-size: 0.88rem; }
+  .fail-mode p { color: #aaa; font-size: 0.82rem; margin-top: 4px; }
+  .fail-mode .model-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-right: 4px;
+  }
+  .model-tag.qwen { background: #0a2a1a; color: #86efac; }
+  .model-tag.gemma { background: #2a1a0a; color: #fde68a; }
+
+  /* Graph row */
+  .graph-row { display: flex; gap: 16px; margin: 24px 0; }
+  .graph-item { flex: 1; background: #12121e; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid #1e1e2e; }
+  .graph-item h4 { font-size: 0.85rem; color: #888; margin-bottom: 8px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; justify-content: center; padding-top: 20px; }
+  .bar-wrapper { display: flex; flex-direction: column; align-items: center; }
+  .bar { width: 40px; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s; }
+  .bar-label { font-size: 0.7rem; color: #888; margin-top: 4px; }
+  .bar-value { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+
+  @media (max-width: 700px) { .graph-row { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>Hermes Local Model Benchmark</h1>
+  <div class="subtitle">Qwen3.5:9b vs Ministral 3 8B vs Ministral 3 14B — Tool-calling comparison on Windows 10</div>
+  <div class="timestamp">Generated: 2026-08-15 19:49:37</div>
+</div>
+
+<div class="env-block">
+  <h3>Test Environment</h3>
+  <ul>
+    <li>OS: Windows 10 — git-bash/MSYS (Hermes native terminal)</li>
+    <li>GPU: RTX 5060 Ti 16GB — CPU: Ryzen 7 5700X — RAM: 32GB</li>
+    <li>Backend: Ollama (localhost:11434) — temperature: 0.1 — context: 8192</li>
+    <li>Both models tested through Ollama's /api/chat endpoint with OpenAI-compatible tool schemas</li>
+    <li>Test categories: basic tool calling · Windows path awareness · multi-turn chaining · error handling · schema adherence · context retention · Linux bias detection · tool selection accuracy</li>
+  </ul>
+</div>
+
+  <div class="model-summary">
+    <div class="ms-card" style="--accent: #22c55e;">
+      <h3 style="color:#22c55e">Qwen3.5:9b</h3>
+      <div class="score-big" style="color:#22c55e">85.7%</div>
+      <div class="stat-row">
+        <div class="stat"><strong>7</strong> passed / <strong>1</strong> failed</div>
+        <div class="stat">Avg: <strong>2.6s</strong></div>
+        <div class="stat">Tool calls: <strong>8</strong></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat">Linux path issues: <strong>0</strong></div>
+        <div class="stat">Gibberish: <strong>0</strong></div>
+        <div class="stat">Schema errors: <strong>0</strong></div>
+      </div>
+      <div class="pass-bar">
+        <div class="pass-bar-fill" style="width:85.7%;background:#22c55e;"></div>
+      </div>
+    </div>
+
+  <div class="model-summary">
+    <div class="ms-card" style="--accent: #3b82f6;">
+      <h3 style="color:#3b82f6">Ministral 3 8B</h3>
+      <div class="score-big" style="color:#22c55e">71.4%</div>
+      <div class="stat-row">
+        <div class="stat"><strong>6</strong> passed / <strong>2</strong> failed</div>
+        <div class="stat">Avg: <strong>3.39s</strong></div>
+        <div class="stat">Tool calls: <strong>7</strong></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat">Linux path issues: <strong>0</strong></div>
+        <div class="stat">Gibberish: <strong>0</strong></div>
+        <div class="stat">Schema errors: <strong>0</strong></div>
+      </div>
+      <div class="pass-bar">
+        <div class="pass-bar-fill" style="width:71.4%;background:#22c55e;"></div>
+      </div>
+    </div>
+
+  <div class="model-summary">
+    <div class="ms-card" style="--accent: #8b5cf6;">
+      <h3 style="color:#8b5cf6">Ministral 3 14B</h3>
+      <div class="score-big" style="color:#eab308">42.9%</div>
+      <div class="stat-row">
+        <div class="stat"><strong>4</strong> passed / <strong>4</strong> failed</div>
+        <div class="stat">Avg: <strong>4.16s</strong></div>
+        <div class="stat">Tool calls: <strong>4</strong></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat">Linux path issues: <strong>0</strong></div>
+        <div class="stat">Gibberish: <strong>0</strong></div>
+        <div class="stat">Schema errors: <strong>0</strong></div>
+      </div>
+      <div class="pass-bar">
+        <div class="pass-bar-fill" style="width:42.9%;background:#eab308;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section">
+    <h2>📋 Per-Test Results</h2>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T01</span>
+      <span class="name">Simple directory listing</span>
+      <span class="category">Basic Tool Calling</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-pass">PASS</span> <span class="time">(4.64s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ calls the terminal tool</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ Path type ambiguous (~/ used)</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-pass">PASS</span> <span class="time">(20.26s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ calls the terminal tool</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ Path type ambiguous (~/ used)</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-pass">PASS</span> <span class="time">(28.11s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ calls the terminal tool</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ Path type ambiguous (~/ used)</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T02</span>
+      <span class="name">Windows path handling</span>
+      <span class="category">Windows Path Handling</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-pass">PASS</span> <span class="time">(2.75s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ understands Windows paths</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-fail">FAIL</span> <span class="time">(3.53s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ does not use Windows-native path; no tool call made</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-fail">FAIL</span> <span class="time">(0.61s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ does not use Windows-native path; no tool call made</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T03</span>
+      <span class="name">Three-step tool chain</span>
+      <span class="category">Multi-Turn Chaining</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-pass">PASS</span> <span class="time">(1.48s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ Call 1: terminal({'command': 'echo starting'}); Total tool calls in response: 1</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-pass">PASS</span> <span class="time">(0.38s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ Call 1: terminal({'command': 'echo starting'}); Total tool calls in response: 1</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-pass">PASS</span> <span class="time">(0.46s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ Total tool calls in response: 0</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T04</span>
+      <span class="name">Graceful error handling</span>
+      <span class="category">Error Recovery</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-pass">PASS</span> <span class="time">(1.84s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ attempted to use a tool</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-pass">PASS</span> <span class="time">(0.56s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ attempted to use a tool</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-fail">FAIL</span> <span class="time">(0.73s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ no tool attempt</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T05</span>
+      <span class="name">Tool call format correctness</span>
+      <span class="category">Schema Adherence</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-pass">PASS</span> <span class="time">(1.78s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ called a tool; called correct tool (web_search); query parameter is valid</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-pass">PASS</span> <span class="time">(0.45s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ called a tool; called correct tool (web_search); query parameter is valid</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-pass">PASS</span> <span class="time">(0.64s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ called a tool; called correct tool (web_search); query parameter is valid</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T06</span>
+      <span class="name">Context across multiple turns</span>
+      <span class="category">Context Retention</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-pass">PASS</span> <span class="time">(3.0s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ remembered the path correctly</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-pass">PASS</span> <span class="time">(0.49s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ remembered the path correctly</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-pass">PASS</span> <span class="time">(0.64s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ remembered the path correctly</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T07</span>
+      <span class="name">Linux command detection</span>
+      <span class="category">Windows Path Handling</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-pass">PASS</span> <span class="time">(3.01s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ no Linux-specific commands used</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-pass">PASS</span> <span class="time">(0.7s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ no Linux-specific commands used</span></li>
+          <li><span class="fail">✗ —</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-fail">FAIL</span> <span class="time">(0.68s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ no tool call made</span></li>
+          <li><span class="note">→ —</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header">
+      <span class="id">T08</span>
+      <span class="name">Tool selection accuracy</span>
+      <span class="category">Schema Adherence</span>
+    </div>
+    <div class="test-body">
+
+      <div class="test-half">
+        <h4>Qwen3.5 — <span class="verdict-fail">FAIL</span> <span class="time">(2.3s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ missing operations: ['read']</span></li>
+          <li><span class="note">→ Tools used: ['write_file']</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 8B — <span class="verdict-fail">FAIL</span> <span class="time">(0.73s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ missing operations: ['read']</span></li>
+          <li><span class="note">→ Tools used: ['write_file']</span></li>
+        </ul>
+      </div>
+
+      <div class="test-half">
+        <h4>Mistral 14B — <span class="verdict-fail">FAIL</span> <span class="time">(1.4s)</span></h4>
+        <ul>
+          <li><span class="pass">✓ —</span></li>
+          <li><span class="fail">✗ missing operations: ['write']</span></li>
+          <li><span class="note">→ Tools used: ['read_file']</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  </div>
+
+  <div class="section">
+    <h2>⚠️ Failure Mode Analysis</h2>
+    <div class="fail-mode-list">
+
+      <div class="fail-mode">
+        <h4>missing operations: ['read']</h4>
+        <p><span class="model-tag">Qwen3.5 (1)</span> <span class="model-tag">Mistral 8B (1)</span> </p>
+      </div>
+
+      <div class="fail-mode">
+        <h4>does not use Windows-native path</h4>
+        <p><span class="model-tag">Mistral 8B (1)</span> <span class="model-tag">Mistral 14B (1)</span> </p>
+      </div>
+
+      <div class="fail-mode">
+        <h4>no tool call made</h4>
+        <p><span class="model-tag">Mistral 8B (1)</span> <span class="model-tag">Mistral 14B (2)</span> </p>
+      </div>
+
+      <div class="fail-mode">
+        <h4>no tool attempt</h4>
+        <p><span class="model-tag">Mistral 14B (1)</span> </p>
+      </div>
+
+      <div class="fail-mode">
+        <h4>missing operations: ['write']</h4>
+        <p><span class="model-tag">Mistral 14B (1)</span> </p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📊 Category Comparison</h2>
+    <div class="graph-row">
+
+      <div class="graph-item">
+        <h4>Basic Tool Calling</h4>
+        <div class="bar-chart">
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#22c55e">100%</div>
+            <div class="bar" style="height:100.0px;background:#22c55e;"></div>
+            <div class="bar-label">Qwen3.5</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#3b82f6">100%</div>
+            <div class="bar" style="height:100.0px;background:#3b82f6;"></div>
+            <div class="bar-label">Mistral 8B</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#8b5cf6">100%</div>
+            <div class="bar" style="height:100.0px;background:#8b5cf6;"></div>
+            <div class="bar-label">Mistral 14B</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-item">
+        <h4>Windows Path Handling</h4>
+        <div class="bar-chart">
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#22c55e">100%</div>
+            <div class="bar" style="height:100.0px;background:#22c55e;"></div>
+            <div class="bar-label">Qwen3.5</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#3b82f6">50%</div>
+            <div class="bar" style="height:50.0px;background:#3b82f6;"></div>
+            <div class="bar-label">Mistral 8B</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#8b5cf6">0%</div>
+            <div class="bar" style="height:4px;background:#8b5cf6;"></div>
+            <div class="bar-label">Mistral 14B</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-item">
+        <h4>Multi-Turn Chaining</h4>
+        <div class="bar-chart">
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#22c55e">100%</div>
+            <div class="bar" style="height:100.0px;background:#22c55e;"></div>
+            <div class="bar-label">Qwen3.5</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#3b82f6">100%</div>
+            <div class="bar" style="height:100.0px;background:#3b82f6;"></div>
+            <div class="bar-label">Mistral 8B</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#8b5cf6">100%</div>
+            <div class="bar" style="height:100.0px;background:#8b5cf6;"></div>
+            <div class="bar-label">Mistral 14B</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-item">
+        <h4>Error Recovery</h4>
+        <div class="bar-chart">
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#22c55e">100%</div>
+            <div class="bar" style="height:100.0px;background:#22c55e;"></div>
+            <div class="bar-label">Qwen3.5</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#3b82f6">100%</div>
+            <div class="bar" style="height:100.0px;background:#3b82f6;"></div>
+            <div class="bar-label">Mistral 8B</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#8b5cf6">0%</div>
+            <div class="bar" style="height:4px;background:#8b5cf6;"></div>
+            <div class="bar-label">Mistral 14B</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-item">
+        <h4>Schema Adherence</h4>
+        <div class="bar-chart">
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#22c55e">50%</div>
+            <div class="bar" style="height:50.0px;background:#22c55e;"></div>
+            <div class="bar-label">Qwen3.5</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#3b82f6">50%</div>
+            <div class="bar" style="height:50.0px;background:#3b82f6;"></div>
+            <div class="bar-label">Mistral 8B</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#8b5cf6">50%</div>
+            <div class="bar" style="height:50.0px;background:#8b5cf6;"></div>
+            <div class="bar-label">Mistral 14B</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-item">
+        <h4>Context Retention</h4>
+        <div class="bar-chart">
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#22c55e">100%</div>
+            <div class="bar" style="height:100.0px;background:#22c55e;"></div>
+            <div class="bar-label">Qwen3.5</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#3b82f6">100%</div>
+            <div class="bar" style="height:100.0px;background:#3b82f6;"></div>
+            <div class="bar-label">Mistral 8B</div>
+          </div>
+          <div class="bar-wrapper">
+            <div class="bar-value" style="color:#8b5cf6">100%</div>
+            <div class="bar" style="height:100.0px;background:#8b5cf6;"></div>
+            <div class="bar-label">Mistral 14B</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📌 Conclusion</h2>
+
+    <div class="env-block" style="border-color:#eab308;">
+      <h3>Verdict: Qwen3.5:9b leads with 85.7% pass rate.</h3>
+      <p style="color:#aaa;font-size:0.85rem;margin-top:8px;">
+        Qwen3.5:9b pass rate: <strong style="color:#22c55e">85.7%</strong> — Ministral 8B pass rate: <strong style="color:#3b82f6">71.4%</strong> — Ministral 14B pass rate: <strong style="color:#8b5cf6">42.9%</strong>
+      </p>
+      <p style="color:#888;font-size:0.82rem;margin-top:8px;">
+        2026-08-15 19:49:37 — Tested on Windows 10 (git-bash), RTX 5060 Ti 16GB, Ollama backend.
+        Tests cover basic tool calling, Windows path handling, multi-turn chaining,
+        error recovery, schema adherence, context retention, and Linux bias detection.
+      </p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

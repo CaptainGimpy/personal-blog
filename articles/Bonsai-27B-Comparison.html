@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonsai 27B — 1-bit vs Ternary Comparison</title>
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #18181d;
+    --border: #2a2a32;
+    --ink: #e4e4ec;
+    --muted: #8a8a9a;
+    --dim: #5a5a6a;
+    --accent-1b: #6eb5ff;
+    --accent-ter: #c084fc;
+    --red: #f87171;
+    --green: #4ade80;
+    --amber: #fbbf24;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    padding: 2rem 1.5rem;
+    line-height: 1.5;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: .25rem;
+    letter-spacing: -.02em;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: .9rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+  }
+  .subtitle span { color: var(--dim); }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 640px) {
+    .comparison-grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .card.highlight-left { border-left: 3px solid var(--accent-1b); }
+  .card.highlight-right { border-left: 3px solid var(--accent-ter); }
+
+  .card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: .75rem;
+  }
+  .card h2 .tag {
+    display: inline-block;
+    font-size: .65rem;
+    font-weight: 500;
+    padding: .15rem .5rem;
+    border-radius: 6px;
+    vertical-align: middle;
+    margin-left: .4rem;
+    letter-spacing: .01em;
+  }
+  .tag-blue { background: rgba(110,181,255,.15); color: var(--accent-1b); }
+  .tag-purp { background: rgba(192,132,252,.15); color: var(--accent-ter); }
+  .tag-amber { background: rgba(251,191,36,.15); color: var(--amber); }
+
+  .stat-group { display: flex; flex-direction: column; gap: .6rem; }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: .85rem;
+  }
+  .stat-row .label { color: var(--muted); }
+  .stat-row .value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-row .value.small { font-size: .8rem; color: var(--dim); }
+
+  .section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 1.5rem 0 .75rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+    margin-bottom: 2rem;
+  }
+  thead th {
+    text-align: left;
+    padding: .6rem .75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 500;
+  }
+  tbody td {
+    padding: .6rem .75rem;
+    border-bottom: 1px solid rgba(42,42,50,.5);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bar-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+  }
+  .bar-bg {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,.08);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+  .bar-fill.blue { background: var(--accent-1b); }
+  .bar-fill.purp { background: var(--accent-ter); }
+  .bar-fill.green { background: var(--green); }
+  .bar-fill.amber { background: var(--amber); }
+
+  .insight-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .insight-box h3 {
+    font-size: .9rem;
+    font-weight: 600;
+    margin-bottom: .5rem;
+  }
+  .insight-box p, .insight-box li {
+    font-size: .85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .insight-box ul { padding-left: 1.25rem; }
+  .insight-box ul li { margin-bottom: .3rem; }
+
+  .verd {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border-radius: 6px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .verd.good { background: rgba(74,222,128,.12); color: var(--green); }
+  .verd.warn { background: rgba(251,191,36,.12); color: var(--amber); }
+  .verd.bad  { background: rgba(248,113,113,.12); color: var(--red); }
+
+  .footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: .75rem;
+    color: var(--dim);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Bonsai 27B &mdash; 1-bit vs Ternary</h1>
+<p class="subtitle">Prism ML compression of Qwen3.6-27B &middot; Tool use &amp; MCP focus &middot; <span>Updated Aug 2026</span></p>
+
+<div class="comparison-grid">
+  <div class="card highlight-left">
+    <h2>1-bit Bonsai 27B <span class="tag tag-blue">Q1_0_g128</span></h2>
+    <div class="stat-group">
+      <div class="stat-row"><span class="label">Disk size</span><span class="value">~2.88&ndash;2.9 GB</span></div>
+      <div class="stat-row"><span class="label">True bits/weight</span><span class="value">1.125 bpw</span></div>
+      <div class="stat-row"><span class="label">Deployed (weights)</span><span class="value small">~3.79 GB</span></div>
+      <div class="stat-row"><span class="label">Peak @ 4K ctx</span><span class="value">~5.2 GB</span></div>
+      <div class="stat-row"><span class="label">Peak @ 100K ctx</span><span class="value">~11.6 GB</span></div>
+      <div class="stat-row"><span class="label">Intelligence density</span><span class="value">0.530 / GB</span></div>
+    </div>
+  </div>
+  <div class="card highlight-right">
+    <h2>Ternary Bonsai 27B <span class="tag tag-purp">Q2_0_g128</span></h2>
+    <div class="stat-group">
+      <div class="stat-row"><span class="label">Disk size</span><span class="value">~8 GB</span></div>
+      <div class="stat-row"><span class="label">True bits/weight</span><span class="value">1.71 bpw</span></div>
+      <div class="stat-row"><span class="label">Deployed (weights)</span><span class="value small">~7.15 GB</span></div>
+      <div class="stat-row"><span class="label">Peak @ 4K ctx</span><span class="value">~8.4 GB</span></div>
+      <div class="stat-row"><span class="label">Peak @ 100K ctx</span><span class="value">~14.7 GB</span></div>
+      <div class="stat-row"><span class="label">Intelligence density</span><span class="value">0.400 / GB</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Benchmark Retention vs FP16 Baseline (Qwen3.6-27B)</div>
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th class="num">FP16</th>
+      <th class="num">Ternary</th>
+      <th></th>
+      <th class="num">1-bit</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Overall (15 benchmarks)</td>
+      <td class="num">85.0</td>
+      <td class="num">80.5</td>
+      <td style="width:100px">
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill purp" style="width:95%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">95%</span>
+        </div>
+      </td>
+      <td class="num">76.1</td>
+      <td style="width:100px">
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill blue" style="width:89%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">89%</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Agentic &amp; Tool-calling</strong> <span style="color:var(--amber)">&#9733;</span></td>
+      <td class="num"><strong>80.0</strong></td>
+      <td class="num"><strong>74.0</strong></td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill purp" style="width:93%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">93%</span>
+        </div>
+      </td>
+      <td class="num"><strong>66.0</strong></td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill blue" style="width:83%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">83%</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Math (GSM8K, MATH, AIME)</td>
+      <td class="num">95.3</td>
+      <td class="num">93.4</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill green" style="width:98%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">98%</span>
+        </div>
+      </td>
+      <td class="num">91.7</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill green" style="width:96%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">96%</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Coding (HumanEval+, MBPP+, LiveCodeBench)</td>
+      <td class="num">88.7</td>
+      <td class="num">86.0</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill amber" style="width:97%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">97%</span>
+        </div>
+      </td>
+      <td class="num">81.9</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill amber" style="width:92%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">92%</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Instruction following</td>
+      <td class="num">78.4</td>
+      <td class="num">71.8</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill purp" style="width:92%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">92%</span>
+        </div>
+      </td>
+      <td class="num">65.8</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill blue" style="width:84%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">84%</span>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Knowledge / STEM</td>
+      <td class="num">83.1</td>
+      <td class="num">77.0</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill purp" style="width:93%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">93%</span>
+        </div>
+      </td>
+      <td class="num">73.4</td>
+      <td>
+        <div class="bar-wrap">
+          <span class="bar-bg"><div class="bar-fill blue" style="width:88%"></div></span>
+          <span style="font-size:.7rem;color:var(--muted)">88%</span>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section-title">Tool Calling: The Real Gap</div>
+
+<div class="comparison-grid">
+  <div class="insight-box">
+    <h3>&#x1F4A5; 1-bit &mdash; Tool Calling: <span class="verd bad">66 / 100</span></h3>
+    <ul>
+      <li><strong>17.5% degradation</strong> from FP16 baseline &mdash; the single largest loss of any capability</li>
+      <li>Degrades <strong>4.6&times; more</strong> than math (3.8% loss)</li>
+      <li>Function call format drift becomes frequent: wrong parameter names, hallucinated args, malformed JSON</li>
+      <li>MCP reliability questionable for multi-step agentic chains</li>
+      <li>Best for: chat, summarization, text gen where exact tool calls aren't critical</li>
+    </ul>
+  </div>
+  <div class="insight-box">
+    <h3>&#x1F9CA; Ternary &mdash; Tool Calling: <span class="verd warn">74 / 100</span></h3>
+    <ul>
+      <li><strong>7.5% degradation</strong> from FP16 baseline &mdash; usable, noticeable but not broken</li>
+      <li>&#x2705; PrismML explicitly demos <strong>MCP integration</strong> with this variant (Demo II, M5 Max)</li>
+      <li>&#x2705; Demos <strong>Hermes agentic workflow</strong> end-to-end (Demo I, RTX 5090)</li>
+      <li>Occasional tool call failures under load, but generally reliable for agent loops</li>
+      <li>Their recommended operating point for agentic/MCP work</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section-title">VRAM Fit on Your RTX 5060 Ti (16 GB)</div>
+<table>
+  <thead>
+    <tr>
+      <th>Scenario</th>
+      <th class="num">1-bit (~2.9 GB disk)</th>
+      <th class="num">Ternary (~8 GB disk)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Weights + 4K ctx</td>
+      <td class="num"><span class="verd good">~5.2 GB</span></td>
+      <td class="num"><span class="verd good">~8.4 GB</span></td>
+    </tr>
+    <tr>
+      <td>Weights + 10K ctx</td>
+      <td class="num"><span class="verd good">~5.6 GB</span></td>
+      <td class="num"><span class="verd good">~8.7 GB</span></td>
+    </tr>
+    <tr>
+      <td>Weights + 100K ctx</td>
+      <td class="num"><span class="verd good">~11.6 GB</span></td>
+      <td class="num"><span class="verd warn">~14.7 GB</span></td>
+    </tr>
+    <tr>
+      <td>Weights + 262K ctx (full)</td>
+      <td class="num"><span class="verd warn">~14 GB est</span></td>
+      <td class="num"><span class="verd bad">~17 GB est</span></td>
+    </tr>
+    <tr>
+      <td>Room for other apps (4K ctx)</td>
+      <td class="num"><span class="verd good">~10.8 GB free</span></td>
+      <td class="num"><span class="verd good">~7.6 GB free</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section-title">Performance Estimates</div>
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th class="num">1-bit</th>
+      <th class="num">Ternary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RTX 5090 (official)</td>
+      <td class="num">163 tok/s</td>
+      <td class="num">134 tok/s</td>
+    </tr>
+    <tr>
+      <td>RTX 5060 Ti 16GB (est)</td>
+      <td class="num">~8&ndash;12 tok/s</td>
+      <td class="num">~6&ndash;10 tok/s</td>
+    </tr>
+    <tr>
+      <td>First token latency (est)</td>
+      <td class="num">low</td>
+      <td class="num">moderate</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="section-title">Verdict for MCP / Tool Use on 16 GB</div>
+
+<div class="insight-box">
+  <h3>&#x1F3AF; The Recommendation</h3>
+  <p>
+    <strong>Ternary (~8 GB)</strong> is the only viable choice for agentic/MCP work. 74/100 on tool calling is degraded but workable &mdash; it's what PrismML themselves demo with Hermes and MCP. Fits your 16 GB card with ~7.6 GB to spare at 4K context.
+  </p>
+  <p style="margin-top:.5rem">
+    <strong>1-bit (~2.9 GB)</strong> at 66/100 tool calling will produce frustrating failures in agentic loops &mdash; wrong function calls, malformed JSON, dropped tools. The 10 GB of free VRAM is tempting, but the capability gap in exactly the area you care about is too wide. This variant is a <strong>chat/summarization model</strong> in practice, not an agent model.
+  </p>
+  <p style="margin-top:.5rem;color:var(--dim);font-size:.8rem">
+    Note: Both need Prism ML's custom llama.cpp fork &mdash; stock Ollama/llama.cpp won't load them. No idea when Ollama support ships.
+  </p>
+</div>
+
+<div class="footer">
+  Sources: PrismML announcement page, HuggingFace model cards (prism-ml/Bonsai-27B-gguf, prism-ml/Ternary-Bonsai-27B-gguf), regolo.ai analysis, HF discussions. Disk sizes noted as user-reported (HF UI is approximate; actual Q1_0 lands ~2.88&ndash;2.9 GB).
+</div>
+
+</div>
+</body>
+</html>

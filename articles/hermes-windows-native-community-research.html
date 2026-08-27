@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Hermes Agent for Windows — No Linux Required</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e8;
+    line-height: 1.7;
+    padding: 0;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 48px 24px 96px; }
+
+  /* Header */
+  .header {
+    border-bottom: 1px solid #1e1e2a;
+    padding-bottom: 32px;
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f97316, #eab308);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .header .subtitle {
+    color: #888;
+    font-size: 1rem;
+  }
+  .header .specs {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .spec-badge {
+    background: #161622;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+  .spec-badge.warn {
+    border-color: #f97316;
+    color: #fb923c;
+  }
+  .spec-badge.green {
+    border-color: #22c55e;
+    color: #86efac;
+  }
+
+  /* Warning banner */
+  .warning {
+    background: linear-gradient(135deg, #2a1a0a, #1a0a0a);
+    border: 1px solid #3a2a1a;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+  .warning h3 {
+    color: #fb923c;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+  .warning p {
+    color: #aaa;
+    font-size: 0.85rem;
+  }
+  .warning ul {
+    color: #aaa;
+    font-size: 0.85rem;
+    padding-left: 20px;
+    margin-top: 8px;
+  }
+  .warning ul li { margin-bottom: 4px; }
+
+  /* Section */
+  .section { margin-bottom: 48px; }
+  .section h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #f97316;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e1e2a;
+  }
+  .section h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #e0e0f0;
+    margin: 24px 0 8px;
+  }
+
+  /* Model cards */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .model-card {
+    background: #12121e;
+    border: 1px solid #1e1e2e;
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .model-card:hover { border-color: #3a3a5e; }
+  .model-card .model-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f97316;
+    margin-bottom: 4px;
+  }
+  .model-card .model-rank {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .model-card .model-rank.green { background: #0a2a1a; color: #86efac; }
+  .model-card .model-rank.yellow { background: #2a2a0a; color: #fde68a; }
+  .model-card .model-rank.red { background: #2a0a0a; color: #fca5a5; }
+  .model-card .model-rank.gray { background: #1a1a2a; color: #888; }
+  .model-card .model-stats {
+    font-size: 0.85rem;
+    color: #aaa;
+    line-height: 1.6;
+  }
+  .model-card .model-stats strong { color: #ddd; }
+  .model-card .os-note {
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+  }
+  .os-note.win-ok { background: #0a2a1a; border-left: 3px solid #22c55e; color: #86efac; }
+  .os-note.win-caution { background: #2a2a0a; border-left: 3px solid #eab308; color: #fde68a; }
+  .os-note.win-fail { background: #2a0a0a; border-left: 3px solid #ef4444; color: #fca5a5; }
+
+  /* How Hermes runs on Windows */
+  .arch-block {
+    background: #12121e;
+    border: 1px solid #1e1e2e;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .arch-block h3 {
+    color: #f97316;
+    margin: 0 0 12px 0;
+    padding: 0;
+    border: none;
+  }
+  .arch-block p, .arch-block li {
+    color: #aaa;
+    font-size: 0.88rem;
+    line-height: 1.7;
+  }
+  .arch-block ul { padding-left: 20px; margin-top: 8px; }
+  .arch-block code {
+    background: #1a1a2a;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    color: #eab308;
+  }
+
+  /* Comparison table */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #1e1e2a;
+  }
+  th {
+    background: #161622;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+  }
+  td { color: #bbb; }
+  tr:hover td { background: #161622; }
+  .td-green { color: #86efac; }
+  .td-yellow { color: #fde68a; }
+  .td-red { color: #fca5a5; }
+
+  /* Verdict block */
+  .verdict-block {
+    background: linear-gradient(135deg, #1a0a0a, #2a1a0a);
+    border: 1px solid #3a2a1a;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+  .verdict-block h3 { color: #f97316; margin-bottom: 12px; }
+  .verdict-block p { color: #bbb; font-size: 0.9rem; margin-bottom: 8px; }
+  .verdict-block .green { color: #86efac; }
+  .verdict-block .gray { color: #888; }
+
+  @media (max-width: 600px) {
+    .container { padding: 24px 16px 64px; }
+    .header h1 { font-size: 1.5rem; }
+    .model-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>Local Hermes Agent — Windows Native Edition</h1>
+  <div class="subtitle">No WSL. No dual-boot. No Linux assumptions. Just the models that actually work on Windows with git-bash.</div>
+  <div class="specs">
+    <span class="spec-badge">AMD Ryzen 7 5700X</span>
+    <span class="spec-badge green">RTX 5060 Ti 16GB</span>
+    <span class="spec-badge">32GB System RAM</span>
+    <span class="spec-badge warn">Windows 10 Native</span>
+    <span class="spec-badge">git-bash / MSYS</span>
+  </div>
+</div>
+
+<div class="warning">
+  <h3>⚠️ The Assumption This Report Breaks</h3>
+  <p>Every single model recommendation you'll find on Reddit, blogs, and YouTube assumes you're running Linux or macOS. The models themselves are trained on Linux-centric tool traces — they will try to call <code>/usr/bin/apt</code>, <code>systemctl</code>, <code>chmod 755</code>, and expect POSIX paths. The community does not account for this. This report does.</p>
+  <ul>
+    <li>Models fine-tuned for "tool use" are often fine-tuned on <em>Linux</em> tool use</li>
+    <li>Hermes on Windows runs commands through <strong>git-bash</strong> (bundled PortableGit), not PowerShell — MSYS path translation applies</li>
+    <li>Blackwell (sm_120) requires torch ≥2.8 — something Ollama handles, but worth knowing</li>
+    <li>Stateful config > CLI args — you hate typing flag strings. This report assumes that.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>How Hermes Runs on Your Machine</h2>
+  <div class="arch-block">
+    <h3>The shell pipeline</h3>
+    <p>Hermes' terminal tool runs commands through <strong>Git Bash</strong> (bundled PortableGit at <code>%LOCALAPPDATA%\hermes\git\usr\bin\bash.exe</code>). The installer sets <code>HERMES_GIT_BASH_PATH</code> automatically. This means:</p>
+    <ul>
+      <li>You use POSIX shell syntax (<code>ls</code>, <code>&&</code>, <code>|</code>, single-quoted strings) inside Hermes sessions</li>
+      <li>PowerShell builtins (<code>Get-ChildItem</code>, <code>$env:FOO</code>) will NOT work in the terminal tool</li>
+      <li>MSYS-style paths like <code>/c/Users/...</code> work alongside native <code>C:\Users\...</code></li>
+      <li><strong>But</strong> any model that expects a Linux filesystem layout or tries to call Linux-specific binaries will fail silently or produce nonsense</li>
+    </ul>
+    <p style="margin-top:12px;"><strong>You already know this</strong> — you run from PowerShell at the keyboard and Hermes uses git-bash internally. The disconnect matters because trained models don't.</p>
+  </div>
+</div>
+
+<!-- THE ONLY MODEL THAT MATTERS -->
+<div class="section">
+  <h2>🥇 The Only Local Model That Works Well on Windows</h2>
+  <div class="model-grid">
+    <div class="model-card" style="border-color: #22c55e;">
+      <div class="model-name">Qwen3.5 9B Instruct</div>
+      <div class="model-rank green">✓ The Pick</div>
+      <div class="model-stats">
+        <strong>VRAM:</strong> ~5.3 GB (Q4_K_M) – ~10.7 GB (Q8)<br>
+        <strong>Speed:</strong> ~29 tok/s (Q8) / ~36 tok/s (Q4) on 5060 Ti<br>
+        <strong>Tool calling:</strong> Good — general enough to not be Linux-biased<br>
+        <strong>Multimodal:</strong> Native (handles images without adapters)
+      </div>
+      <div class="os-note win-ok">✓ Windows-native behavior. No Linux tool call bias. This is the one.</div>
+    </div>
+  </div>
+  <p style="color:#999;font-size:0.85rem;margin:8px 0;">
+    Qwen3.5 is a general-purpose instruct model, not a tool-use specialist. That's actually its advantage on Windows — because it wasn't fine-tuned on a narrow dataset of Linux-centric agent traces, it doesn't default to Unix assumptions. It treats the tool schema Hermes gives it as the ground truth, not as a suggestion to override with Linux muscle memory.
+  </p>
+  <p style="color:#999;font-size:0.85rem;">
+    <strong>You already run this.</strong> It's the right call. The community agrees, <em>and</em> it passes the Windows test that most of the community never considers.
+  </p>
+</div>
+
+<!-- MODELS TO SKIP -->
+<div class="section">
+  <h2>✗ Models to Skip (Windows Reasons)</h2>
+
+  <div class="model-grid">
+    <div class="model-card">
+      <div class="model-name">LFM 2.5 (any variant)</div>
+      <div class="model-rank red">You Already Know</div>
+      <div class="model-stats">
+        <strong>Your experience:</strong> Kept making Linux-native tool calls. Garbage output to the user.
+      </div>
+      <div class="os-note win-fail">✗ Confirmed: Linux tool call bias makes it unusable on Windows</div>
+    </div>
+
+    <div class="model-card">
+      <div class="model-name">LFM2 24B-A2B (MoE)</div>
+      <div class="model-rank red">False Fit</div>
+      <div class="model-stats">
+        <strong>VRAM:</strong> ~14 GB at Q4_K_M<br>
+        <strong>Problem:</strong> Leaves 2GB for OS + KV cache + context. Any real conversation immediately spills to system RAM over PCIe. And based on lfm2.5 behavior, same Linux tool call issues.
+      </div>
+      <div class="os-note win-fail">✗ Doesn't fit usefully + same Linux bias as lfm2.5</div>
+    </div>
+
+    <div class="model-card">
+      <div class="model-name">Llama-3-Groq-8B-Tool-Use</div>
+      <div class="model-rank red">Linux Specialist</div>
+      <div class="model-stats">
+        <strong>What it is:</strong> Llama 3 fine-tuned purely for function calling (89% Berkeley benchmark)<br>
+        <strong>Problem:</strong> Fine-tuned on Linux traces. General intelligence is weak. No multimodal.
+      </div>
+      <div class="os-note win-fail">✗ Tool-use specialist trained on Linux — expects a Unix environment</div>
+    </div>
+
+    <div class="model-card">
+      <div class="model-name">Qwen3 14B</div>
+      <div class="model-rank red">Too Old</div>
+      <div class="model-stats">
+        <strong>Release:</strong> Pre-agent tool calling era<br>
+        <strong>Problem:</strong> Same tool calling weakness as qwen3:4b. Worse than Qwen3.5:9b at a larger footprint.
+      </div>
+      <div class="os-note win-fail">✗ Qwen3 base doesn't do agentic tool calls reliably regardless of OS</div>
+    </div>
+
+    <div class="model-card">
+      <div class="model-name">Qwen3.6 / 3.8 27B+</div>
+      <div class="model-rank red">Don't Fit</div>
+      <div class="model-stats">
+        <strong>VRAM:</strong> Spills to system RAM over PCIe on 16GB cards<br>
+        <strong>Result:</strong> Everyone reports abysmal speed and tool call loops
+      </div>
+      <div class="os-note win-fail">✗ Doesn't fit 16GB usefully regardless of OS</div>
+    </div>
+
+    <div class="model-card">
+      <div class="model-name">Gemma 4 12B</div>
+      <div class="model-rank yellow">"Fine"</div>
+      <div class="model-stats">
+        <strong>VRAM:</strong> ~8 GB (Q4_K_M)<br>
+        <strong>Your verdict:</strong> "Fine. Not particularly amazing." You've used all three variants.
+      </div>
+      <div class="os-note win-caution">○ Works on Windows, just not better than what you already have</div>
+    </div>
+  </div>
+</div>
+
+<!-- THE REAL EQUATION -->
+<div class="section">
+  <h2>🔑 The Missing Variable: Operating Environment</h2>
+  <p style="color:#bbb;font-size:0.9rem;margin-bottom:16px;">
+  Most model recommendations reduce to:<br><br>
+  <code style="background:#1a1a2a;padding:4px 12px;border-radius:6px;color:#eab308;">"Does it fit in VRAM? ✓ → Recommend it."</code><br><br>
+  The actual equation for you is:
+  </p>
+  <div style="background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:20px;margin-bottom:16px;">
+    <p style="color:#eab308;font-size:0.9rem;font-weight:600;">Does it fit in VRAM with headroom for context?</p>
+    <p style="color:#eab308;font-size:0.9rem;font-weight:600;margin-top:4px;">+ Was it trained on Linux traces?</p>
+    <p style="color:#eab308;font-size:0.9rem;font-weight:600;margin-top:4px;">+ Does it default to Unix assumptions in tool calls?</p>
+    <p style="color:#eab308;font-size:0.9rem;font-weight:600;margin-top:4px;">+ Does it handle the Hermes tool schema as ground truth vs "muscle memory"?</p>
+    <p style="color:#eab308;font-size:0.9rem;font-weight:600;margin-top:4px;">+ Can it do what I need without forcing me to change my OS?</p>
+  </div>
+  <p style="color:#999;font-size:0.85rem;">
+    Qwen3.5:9b passes all five. Almost nothing else on the 16GB market does.
+  </p>
+</div>
+
+<!-- TIERED ARCHITECTURE -->
+<div class="section">
+  <h2>Your Current Architecture (It's the Right One)</h2>
+  <div class="arch-block">
+    <h3>The tiered approach is the Windows-native best practice</h3>
+    <table style="font-size:0.85rem;">
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>Job</th>
+          <th>Your Pick</th>
+          <th>Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong style="color:#86efac;">Cloud</strong></td>
+          <td>Coding, complex reasoning, long sessions</td>
+          <td>OmniRoute chain (Kimi, DeepSeek, etc.)</td>
+          <td>You don't fight VRAM or OS bias. The cloud does the heavy lifting.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#eab308;">Local</strong></td>
+          <td>Tool calling, orchestration, chat, research</td>
+          <td>Qwen3.5:9b via Ollama</td>
+          <td>No Linux bias, fits with headroom, handles tool calling well enough for lightweight work</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#f97316;">Background</strong></td>
+          <td>Memory extraction, embeddings</td>
+          <td>Qwen3.5 → mem0 → Qdrant</td>
+          <td>Same model, dual use. No VRAM waste.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<div class="section">
+  <h2>Your Setup vs "The Community" (Filtered by Windows)</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>You</th>
+          <th>Everyone Else (Linux)</th>
+          <th>Who's Right</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Local model</td>
+          <td>Qwen3.5:9b</td>
+          <td>Qwen3.5:9b or Gemma 4 12B</td>
+          <td class="td-green">Same, both work</td>
+        </tr>
+        <tr>
+          <td>Memory provider</td>
+          <td>Mem0 + Qdrant</td>
+          <td>Most don't set one up</td>
+          <td class="td-green">You're ahead</td>
+        </tr>
+        <tr>
+          <td>Cloud fallback</td>
+          <td>OmniRoute (4 providers)</td>
+          <td>Direct API keys</td>
+          <td class="td-green">More sophisticated</td>
+        </tr>
+        <tr>
+          <td>Tool-use specialist</td>
+          <td>N/A — Qwen3.5 generalist works</td>
+          <td>Llama-3-Groq-8B-Tool-Use</td>
+          <td class="td-green">You skip Linux-biased models</td>
+        </tr>
+        <tr>
+          <td>Windows desktop</td>
+          <td>Working (occlusion fix merged)</td>
+          <td>N/A (Linux/macOS)</td>
+          <td class="td-green">You contributed the fix</td>
+        </tr>
+        <tr>
+          <td>Model philosophy</td>
+          <td>One model, dual-use (chat + mem0)</td>
+          <td>Separate models per task</td>
+          <td class="td-green">More VRAM-efficient</td>
+        </tr>
+        <tr>
+          <td>Context strategy</td>
+          <td>Tiered — local short, cloud long</td>
+          <td>Pure local, hits wall</td>
+          <td class="td-green">Practical</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Verdict -->
+<div class="verdict-block">
+  <h3>Bottom Line</h3>
+  <p>You're not missing anything. The community discourse is written for a different OS and a different use case.</p>
+  <p class="gray">Most people running local Hermes on Linux are trying to <em>replace</em> cloud entirely. That's not your model — and it shouldn't be, because it doesn't work well on Windows without fighting the tool bias.</p>
+  <p class="gray">Your tiered approach (cloud for heavy, local for light, same model for mem0 + chat) is the <strong>correct Windows-native strategy</strong>. The only thing the community offers that you haven't evaluated is Gemma 4 12B — and you already did and found it "fine."</p>
+  <p style="margin-top:16px;color:#f97316;">
+  <strong>Qwen3.5:9b is it. Nothing else on the 16GB market passes the Windows filter.</strong>
+  </p>
+</div>
+
+</div>
+</body>
+</html>

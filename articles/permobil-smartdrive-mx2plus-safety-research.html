@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permobil SmartDrive MX2+ — Safety, Switch Issues &amp; Homebrew Development Research</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #79c0ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --pink: #f778ba;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 2.2rem; margin-bottom: 0.25rem; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; color: var(--accent2); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1.15rem; margin: 1.8rem 0 0.6rem; color: var(--green); }
+  h4 { font-size: 1rem; margin: 1.2rem 0 0.4rem; color: var(--orange); }
+  p, li { color: var(--text); margin-bottom: 0.6rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .meta { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+  code { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 0.88em; font-family: 'Monaspace', 'Fira Code', 'JetBrains Mono', monospace; }
+  pre {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0.8rem 0 1.5rem;
+    font-size: 0.85rem;
+    font-family: 'Monaspace', 'Fira Code', 'JetBrains Mono', monospace;
+    line-height: 1.5;
+    color: #c9d1d9;
+  }
+  .tag {
+    display: inline-block;
+    background: rgba(88,166,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.25);
+    border-radius: 3px;
+    padding: 1px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  .tag-red { background: rgba(248,81,73,0.12); color: var(--red); border-color: rgba(248,81,73,0.25); }
+  .tag-orange { background: rgba(210,153,34,0.12); color: var(--orange); border-color: rgba(210,153,34,0.25); }
+  .tag-purple { background: rgba(188,140,255,0.12); color: var(--purple); border-color: rgba(188,140,255,0.25); }
+  .tag-green { background: rgba(63,185,80,0.12); color: var(--green); border-color: rgba(63,185,80,0.25); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.9rem;
+  }
+  th, td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--bg2); font-weight: 600; color: var(--text); }
+  td { background: var(--bg3); }
+  .box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin: 0.6rem 0;
+  }
+  .box-title { font-weight: 600; color: var(--accent); margin-bottom: 0.3rem; }
+  .rec {
+    border-left: 3px solid var(--green);
+    padding: 0.6rem 0.8rem;
+    margin: 1rem 0;
+    background: rgba(63,185,80,0.06);
+    border-radius: 0 6px 6px 0;
+  }
+  .rec-title { font-weight: 600; color: var(--green); }
+  .warn {
+    border-left: 3px solid var(--orange);
+    padding: 0.6rem 0.8rem;
+    margin: 1rem 0;
+    background: rgba(210,153,34,0.06);
+    border-radius: 0 6px 6px 0;
+  }
+  .warn-title { font-weight: 600; color: var(--orange); }
+  .danger {
+    border-left: 3px solid var(--red);
+    padding: 0.6rem 0.8rem;
+    margin: 1rem 0;
+    background: rgba(248,81,73,0.06);
+    border-radius: 0 6px 6px 0;
+  }
+  .danger-title { font-weight: 600; color: var(--red); }
+  .toc { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; }
+  .toc h3 { margin-top: 0; color: var(--accent2); }
+  .toc a { display: block; padding: 0.15rem 0; }
+  .toc .sub { padding-left: 1.2rem; font-size: 0.9rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .footer { color: var(--text-dim); font-size: 0.85rem; text-align: center; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .arch-diagram {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.2rem 0;
+    text-align: center;
+    font-family: 'Monaspace', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-dim);
+  }
+  .arch-diagram .hl { color: var(--accent); font-weight: 600; }
+  .arch-diagram .hl2 { color: var(--green); }
+  .arch-diagram .hl3 { color: var(--purple); }
+  .arch-diagram .hl4 { color: var(--orange); }
+  .arch-diagram .hlr { color: var(--red); }
+</style>
+</head>
+<body>
+
+<h1>Permobil SmartDrive MX2+</h1>
+<p style="font-size:1.1rem; color:var(--text-dim); margin-bottom:0.5rem;">Safety Research: Physical Switch Configuration, Recalls, User Reports &amp; Homebrew Development Opportunities</p>
+<div class="meta">Research Date: 2026-08-09 | Sources: FDA MAUDE, New Mobility, Reddit r/wheelchairs, Permobil Official Docs, Community Reports</div>
+
+<div class="toc">
+<h3>Contents</h3>
+<a href="#s1">1. Executive Summary</a>
+<a href="#s2">2. The SpeedControl Dial Recall (What It Means for You)</a>
+<a href="#s3">3. Physical Switch Issues — SwitchControl, Buddy Button &amp; Cables</a>
+<a href="#s3a" class="sub">3.1 SwitchControl (Thumb Throttle) — Spontaneous Activation Reports</a>
+<a href="#s3b" class="sub">3.2 Buddy Button — Self-Starting &amp; Cable Snapping</a>
+<a href="#s3c" class="sub">3.3 Cable &amp; Connector Reliability</a>
+<a href="#s3d" class="sub">3.4 Wired Control Detect Feature (Firmware v3.3)</a>
+<a href="#s4">4. Design Flaw Analysis — Micro-Steering &amp; Tipping</a>
+<a href="#s4a" class="sub">4.1 Single-Point Mount &amp; Micro-Steering</a>
+<a href="#s4b" class="sub">4.2 No Stall Detection — The Tipping Hazard</a>
+<a href="#s4c" class="sub">4.3 Bluetooth &amp; Wearable Controller Issues</a>
+<a href="#s5">5. MAUDE Adverse Event Database — Switch-Related Reports</a>
+<a href="#s6">6. Homebrew Development — Can You Build Your Own Controller?</a>
+<a href="#s6a" class="sub">6.1 The Mono Jack Path — The Most Accessible Entry Point</a>
+<a href="#s6b" class="sub">6.2 Bluetooth BLE Reverse Engineering</a>
+<a href="#s6c" class="sub">6.3 Vanderbilt Design Project — Ergonomic Bluetooth Control</a>
+<a href="#s6d" class="sub">6.4 Building a Custom App — What's Feasible</a>
+<a href="#s7">7. Official Technical Documentation</a>
+<a href="#s8">8. Recommended Approach for Your Custom App</a>
+<a href="#s9">9. Sources &amp; Links</a>
+</div>
+
+<h2 id="s1">1. Executive Summary</h2>
+
+<p>The Permobil SmartDrive MX2+ has been the subject of <strong>three escalating FDA Class I recalls</strong> (December 2024 → March 2025 → August 2025) culminating in a <strong>worldwide removal of all SpeedControl Dials</strong> from the market. The official replacement path is the <strong>SwitchControl</strong> (a physical button) or <strong>SwitchControl + Buddy Button</strong> — exactly the physical switch configuration you use.</p>
+
+<p><strong>Key finding:</strong> While the dial recall is the headline, there are <strong>documented failures with the physical switch replacements too</strong>, including spontaneous activation, cable breakage, and intermittent connections. The MAUDE adverse event database contains reports of SwitchControl and Buddy Button units engaging the SmartDrive motor without user input — Permobil has been unable to replicate many of these in testing, but the reports exist.</p>
+
+<p><strong>On homebrew development:</strong> There is <strong>no public GitHub project, documented BLE protocol, or open-source controller</strong> for the SmartDrive MX2+. The community is essentially a blank slate. The most promising entry points are: (1) the <strong>mono jack port</strong> on the SwitchControl with Mono Jack option, which accepts any standard 3.5mm mono switch — a passive external switch you can build or adapt; and (2) <strong>BLE GATT sniffing</strong> using nRF Connect or similar tools against the SmartDrive MX2+ mobile app. A Vanderbilt University biomedical engineering capstone project (Spring 2026) worked on an "Ergonomic Bluetooth Control for Permobil SmartDrive" — suggesting academic interest but no public deliverable found.</p>
+
+<h2 id="s2">2. The SpeedControl Dial Recall</h2>
+
+<div class="danger">
+<div class="danger-title">🚨 FDA Class I Recall — Most Serious Type</div>
+<p><strong>Three escalating recalls, now a worldwide market removal:</strong></p>
+<table>
+  <tr><th>Date</th><th>Action</th><th>Scope</th><th>Complaints/Injuries</th></tr>
+  <tr><td>Dec 20, 2024</td><td>Initial recall</td><td>PCBA change (Aug 17, 2023 – Nov 21, 2024)</td><td>646 complaints, 3 serious injuries (fractured hip, tibia, malleolus)</td></tr>
+  <tr><td>Mar 28, 2025</td><td>Expanded recall</td><td>Extended through Mar 10, 2025</td><td>781 complaints, 5 serious injuries (fractures + concussion)</td></tr>
+  <tr><td>Aug 12, 2025</td><td>Worldwide removal</td><td><strong>All</strong> dials Apr 25, 2022 – Jul 8, 2025</td><td>54 new complaints, 2 new serious injuries (bone fractures)</td></tr>
+</table>
+</div>
+
+<p><strong>Root cause (three distinct problems identified across the recalls):</strong></p>
+<ol>
+  <li><strong>PCBA material change:</strong> A change in the printed circuit board assembly caused intermittent electrical behavior including continued drive, involuntary movement, loss of power, and failure to start.</li>
+  <li><strong>Intermittent cable connection:</strong> The physical cable connection between the dial and the SmartDrive motor could fail intermittently, causing the motor to become unresponsive or behave unpredictably.</li>
+  <li><strong>Inherent design flaw:</strong> The August 2025 expansion acknowledged a <strong>design issue present since the dial launched in April 2022</strong> — affecting even replacement units sent under the earlier recalls.</li>
+</ol>
+
+<p><strong>The four reported failure modes:</strong></p>
+<ul>
+  <li><span class="tag tag-red">Continued drive</span> Dial at zero position but motor doesn't stop</li>
+  <li><span class="tag tag-red">Involuntary movement</span> Motor activates without user input (dial in standby, light flashing)</li>
+  <li><span class="tag tag-orange">Loss of power</span> Motor shuts down unexpectedly after activation</li>
+  <li><span class="tag tag-orange">Failure to start</span> Rotating the dial forward produces no motor response</li>
+</ul>
+
+<p><strong>Your status:</strong> If you're using the SwitchControl (physical button), you're on the <strong>recommended alternate control</strong>. The FDA and Permobil explicitly state the SmartDrive MX2+ device itself is <strong>not impacted</strong> — only the SpeedControl Dial. However, the SwitchControl replacements have their own documented issues (see next section).</p>
+
+<h2 id="s3">3. Physical Switch Issues — SwitchControl, Buddy Button &amp; Cables</h2>
+
+<p class="meta">This section focuses specifically on <strong>the physical button/switch configurations</strong> — the SwitchControl (thumb throttle) and Buddy Button — which is what Permobil is providing as replacements for the recalled dials.</p>
+
+<h3 id="s3a">3.1 SwitchControl (Thumb Throttle) — Spontaneous Activation Reports</h3>
+
+<p>The SwitchControl (formerly called the "thumb throttle") is a wired physical button included with every SmartDrive MX2+. It operates in two modes:</p>
+<ul>
+  <li><strong>Momentary Mode (default):</strong> Press and hold to drive; release to stop</li>
+  <li><strong>Latched Mode:</strong> Tap once to engage constant power; tap again to stop</li>
+</ul>
+
+<div class="warn">
+<div class="warn-title">⚠ User reports of SwitchControl issues (r/wheelchairs):</div>
+<ul>
+  <li>"I hate these switch controls. I had to move them to my manual chair's arm rest to be able to use them better so I can still quickly [stop them]."</li>
+  <li>"Since getting the buddy button, it has turned itself on multiple times."</li>
+  <li>"The new smart drive switch is horrible!" — multiple users report frustration with placement, sensitivity, and accidental activation</li>
+  <li>Several users report the SwitchControl "engaging a drive command" without intentional input — documented in MAUDE (see section 5)</li>
+</ul>
+</div>
+
+<div class="danger">
+<div class="danger-title">🚨 MAUDE Report — SwitchControl Spontaneous Activation</div>
+<p><strong>Report ID 24395317</strong> (Max Mobility LLC, SmartDrive MX2+):</p>
+<p>"Received report claiming with the switch control with buddy button option reportedly activated the smart drive without any intentional user input."</p>
+<p><strong>Permobil's response:</strong> "Received suspect device and controller, and through testing was unable to replicate any actions of involuntary activation as alleged to have occurred."</p>
+<p><strong>Analysis:</strong> Permobil's inability to replicate does not mean the events didn't happen — intermittent electrical faults are notoriously hard to reproduce in a lab. The MAUDE database has multiple entries citing failure to shut off and unintended activation across various controller types.</p>
+</div>
+
+<h3 id="s3b">3.2 Buddy Button — Self-Starting &amp; Cable Snapping</h3>
+
+<p>The Buddy Button is a larger third-party switch offered by Permobil as a replacement option for the recalled dial. It connects via the SwitchControl's mono jack port.</p>
+
+<p><strong>User-reported issues specific to the Buddy Button:</strong></p>
+<ul>
+  <li><strong>Self-activation:</strong> "Since getting the buddy button, it has turned itself on multiple times."</li>
+  <li><strong>Cable snapping:</strong> "The cable snapped" — a physical failure point reported by multiple users</li>
+  <li><strong>Placement challenges:</strong> Users report difficulty positioning the button where it's accessible without accidental triggering</li>
+  <li><strong>Durability concerns:</strong> The Buddy Button is a third-party accessory provided by Permobil, and its long-term reliability is unproven — it was rapidly deployed as a recall replacement</li>
+</ul>
+
+<h3 id="s3c">3.3 Cable &amp; Connector Reliability</h3>
+
+<p>A recurring theme across user reports is <strong>cable and connector problems</strong>:</p>
+<ul>
+  <li>The cable between the SwitchControl and the SmartDrive unit is a physical vulnerability point — it runs under the seat, gets pinched in folding chairs, and can disconnect</li>
+  <li>One user reported: "I had issues with the cable disconnecting when the cable was not completely underneath my seat but since I ran it underneath my wheelchair I had [fewer issues]"</li>
+  <li>The SwitchControl with Mono Jack adds another connection point (the 3.5mm jack) — another potential failure point</li>
+  <li>The original SpeedControl Dial recall was <strong>ultimately expanded to a worldwide removal</strong> specifically because of <strong>"intermittent cable connection concerns"</strong> — this pattern of cable-related failures should not be dismissed for the SwitchControl either</li>
+</ul>
+
+<div class="rec">
+<div class="rec-title">💡 Installation guide for cable management</div>
+<p>Permobil's official <a href="https://hub.permobil.com/hubfs/Installing%20SwitchControl%20with%20Mono%20Jack.pdf">SwitchControl with Mono Jack Installation PDF</a> recommends: route cables on top of seat upholstery, secure cables with Velcro and cable ties, and avoid pinch points where the chair folds. Following this guide precisely may reduce intermittent connection issues.</p>
+</div>
+
+<h3 id="s3d">3.4 Wired Control Detect Feature (Firmware v3.3)</h3>
+
+<p>Released July 31, 2024, firmware v3.3 introduced a <strong>"wire control detect"</strong> feature and a default power assist timeout change. This suggests Permobil acknowledged cable connection reliability was already an issue worth a firmware feature. If you haven't updated your SmartDrive to v3.3, doing so may improve wired control behavior.</p>
+
+<h2 id="s4">4. Design Flaw Analysis — Micro-Steering, No Stall Detection &amp; the Tipping Failure Chain</h2>
+
+<p><strong>Note:</strong> This section captures direct user analysis from an experienced SmartDrive MX2+ owner. These observations are not documented in official materials but represent a coherent engineering critique of the device's fundamental design.</p>
+
+<h3>4.1 The Single-Point Mount &amp; Micro-Steering Problem</h3>
+
+<p>The SmartDrive MX2+ attaches to a manual wheelchair's rigid frame via a <strong>single-point axle clamp and plastic quick-release clip</strong>. This single-point connection allows the drive unit to rotate slightly around the vertical (Y) axis — a design choice made for easy attachment and detachment.</p>
+
+<p><strong>The failure mode:</strong> When the user rolls over typical sidewalk irregularities (cracks, bumps, tree root heaves), the OmniWheel can momentarily lose ground contact. Upon re-engagement, the drive unit has rotated slightly on its single-axis mount, and the resulting contact introduces a <strong>lateral force vector</strong> — the drive wheel is now pushing at a slightly different angle than the wheelchair's heading. This causes what users describe as <strong>"micro-steering"</strong> — small, constant course deviations that the user must correct with their hands on the push rims.</p>
+
+<p><strong>Why this matters for safety:</strong> Since almost nothing in the real world is perfectly level, the user ends up with their hands on their wheels almost constantly doing micro-corrections. This means they <strong>cannot quickly reach the physical SwitchControl</strong> when they need to stop or react. The design forces a conflict between two necessary actions — steering and controlling the drive — and the micro-steering demand wins every time because keeping the chair on course is the more immediate survival need.</p>
+
+<p><strong>How it could be fixed:</strong> A <strong>dual retention arm</strong> add-on — a second contact point between the drive unit and the wheelchair frame — would constrain the Y-axis rotation and keep the drive unit's thrust vector aligned with the chair's heading regardless of bumps. This would slightly increase the time needed to detach the unit but would dramatically improve directional stability and free the user's hands for the controls.</p>
+
+<h3>4.2 No Obstacle / Stall Detection — The Tipping Hazard</h3>
+
+<p>The SmartDrive MX2+'s motor is essentially a <strong>dumb motor</strong> — it has no obstacle detection, torque sensing, or stall detection of any kind. The motor controller does not monitor whether the wheel is actually moving in response to the drive command.</p>
+
+<p><strong>The failure mode:</strong> If the front casters encounter an obstacle (a curb lip too tall to climb, a deep crack, a rock), the wheelchair's forward motion is arrested at the front wheels. But the rear-mounted SmartDrive has no awareness of this — it continues pushing. The result:</p>
+
+<ol>
+  <li>Front casters hit an obstacle and stop</li>
+  <li>Rear drive motor continues pushing forward</li>
+  <li>The wheelchair begins to pitch forward over the front casters</li>
+  <li>The drive motor only <em>stops</em> when the OmniWheel loses ground contact because the chair has pitched far enough forward to lift it</li>
+  <li>By that point, the user is already tipping forward</li>
+</ol>
+
+<div class="danger">
+<div class="danger-title">🚨 The Vicious Cycle</div>
+<p>The three design flaws connect into a dangerous chain:</p>
+<p><strong>Micro-steering</strong> (single-point mount) → hands stay on wheels for constant correction → <strong>can't reach the physical switch</strong> in time → <strong>casters hit obstacle</strong> → <strong>no stall detection</strong> → motor keeps pushing → <strong>user tips forward</strong> → device only stops when wheel leaves ground → <strong>too late</strong>.</p>
+<p>Each flaw individually is manageable. The three together create a failure cascade where the user has no good option at any point in the chain.</p>
+</div>
+
+<p><strong>How it could be fixed (firmware):</strong> The motor already has a Hall effect sensor for speed measurement. Basic stall detection could be implemented using existing hardware: if the motor is commanded to spin but the Hall sensor reports zero or near-zero rotation for more than ~250ms, cut power. This is a ~$0 firmware change that would prevent the tipping scenario entirely. The fact that after multiple recalls and firmware releases (v3.2, v3.3) this still hasn't been implemented is a significant oversight.</p>
+
+<p><strong>How it could be fixed (your custom app):</strong> If you build a BLE-based controller and discover the motor command characteristics, you can implement your own stall detection in software: if you sent a "drive" command but the status characteristic reports no movement, automatically send "stop" and alert the user. This won't help if you're using the mono jack path (which is passive contact closure), but it would be a genuine safety improvement for a BLE-based approach.</p>
+
+<h2 id="s4b">4.3 Bluetooth &amp; Wearable Controller Issues (Legacy Incidents)</h2>
+
+<p>Although you asked specifically about physical switches, the Bluetooth/wearable issues are relevant context because they're the <strong>only other official control option</strong> and illustrate Permobil's overall controller quality problems:</p>
+
+<ul>
+  <li><strong>May 2023 recall:</strong> PushTracker E2/E3 smartwatch controllers could fail to disengage when "multiple processes are running on the watch's CPU" — the app would crash, the motor would continue running, and the user couldn't stop it</li>
+  <li><strong>Vincenzo Piscopo (United Spinal CEO) incident:</strong> Pushed off a stage because the watch controller would not decelerate the SmartDrive</li>
+  <li><strong>Multiple user reports:</strong> "It wouldn't always respond to me" (Erin Gildner, pushed toward a toddler); "It pushed me into a stop sign" (Seth McBride, New Mobility writer); "Almost ran a red light" (Boni, comment on New Mobility article)</li>
+  <li><strong>Bluetooth interference:</strong> Users report worse reliability in crowded public spaces (event centers, busy streets) where many Bluetooth devices are present</li>
+  <li><strong>Gesture activation issues:</strong> "I talk with my hands. It's really hard to stop being Italian." — Piscopo's gesture-based activation kept engaging unintentionally while he was speaking</li>
+</ul>
+
+<div class="warn">
+<div class="warn-title">⚠ Implication for your custom app project</div>
+<p>If you build a custom app that communicates via Bluetooth to the SmartDrive, you inherit all the same <strong>Bluetooth reliability issues</strong> that Permobil's own controllers suffer from. Bluetooth interference, dropouts, and latency are <strong>hardware/platform-level</strong> problems — no amount of clever app code can fully solve them. <strong>A physical emergency cutoff</strong> (a wired kill switch in parallel) should be a non-negotiable safety feature of any custom controller.</p>
+</div>
+
+<h2 id="s5">5. MAUDE Adverse Event Database — Switch-Related Reports</h2>
+
+<p>The FDA's MAUDE (Manufacturer and User Facility Device Experience) database contains the following entries specifically relevant to physical switch configurations. Product code ITI (Power Wheelchair/SmartDrive):</p>
+
+<table>
+  <tr><th>Event ID</th><th>Problem</th><th>Controller Type</th><th>Outcome</th></tr>
+  <tr><td><a href="https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=24395317&pc=ITI">24395317</a></td><td>Unintended activation without user input</td><td>SwitchControl + Buddy Button</td><td>Permobil unable to replicate; device returned</td></tr>
+  <tr><td><a href="https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=23743644&pc=ITI">23743644</a></td><td>Failure to shut off</td><td>SpeedControl Dial → replaced with SwitchControl</td><td>Providing SwitchControl as replacement</td></tr>
+  <tr><td><a href="https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=22866701&pc=ITI">22866701</a></td><td>Failure to shut off (intermittent connection)</td><td>SpeedControl Dial</td><td>Device replaced</td></tr>
+  <tr><td>Listed under ITI code</td><td>Device "engaged a drive command"</td><td>SwitchControl buttons</td><td>Reported (innolitics.com aggregate)</td></tr>
+</table>
+
+<div class="danger">
+<div class="danger-title">🔍 Why Permobil "could not reproduce" — the testing gap</div>
+<p>A pattern across multiple MAUDE reports: Permobil receives the returned device, tests it in their lab, and reports they were "unable to replicate any actions of involuntary activation." This sounds definitive, but there's a fundamental methodology problem.</p>
+<p><strong>Intermittent electrical faults — especially connector and cable faults — are notoriously dependent on:</strong></p>
+<ul>
+  <li><strong>Temperature:</strong> Connector metals expand at different rates. A marginal connection that works at 22°C lab ambient may fail at 35°C on a summer sidewalk or after the motor unit has been running for 20 minutes and warmed up internally</li>
+  <li><strong>Vibration frequency:</strong> The specific resonance of your wheelchair frame, tire pressure, and local sidewalk surface creates a unique vibration profile that a bench test cannot replicate</li>
+  <li><strong>Cable strain angle:</strong> The cable is routed under your specific seat pan, at a specific bend radius, held by specific Velcro straps. The proprietary connector exits the cable at a specific angle that changes over months of daily flexing. A lab tests a fresh cable in a straight run</li>
+  <li><strong>Load:</strong> The motor connector behaves differently under propulsion load vs. free-spinning on a bench. Electrical contacts can momentarily separate under mechanical load that a no-load test never produces</li>
+  <li><strong>Wear:</strong> Months of daily connect/disconnect cycles wear the proprietary connector's contacts. A returned unit's connector is tested as-received, but the failure may have been position-dependent on the user's specific chair in a way that isn't reproducible once removed</li>
+</ul>
+<p><strong>The bottom line:</strong> "Cannot reproduce in lab testing" does <strong>not</strong> mean the failure didn't happen. It means the lab's test conditions don't match the field conditions. Medical device failure analysis that doesn't replicate the user's full installation — cable routing, wheelchair model, typical terrain, usage patterns — is incomplete. This is a known limitation in how intermittent faults in consumer/medical devices are investigated across the industry, not unique to Permobil, but it means MAUDE's "unable to replicate" entries should be read as "we haven't found the right test conditions," not "the user was mistaken."</p>
+</div>
+
+<p><strong>Note:</strong> The MAUDE database is searchable at <a href="https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/search.cfm">accessdata.fda.gov</a>. To find future reports, search product code <strong>ITI</strong> with brand name "SmartDrive" or "Max Mobility."</p>
+
+<h2 id="s6">6. Homebrew Development — Building Your Own Controller</h2>
+
+<div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│           PATHS TO CUSTOM SMARTDRIVE CONTROL                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  <span class="hl">PATH A — Mono Jack (Most Feasible, Already Supported)</span>       │
+│  ┌─────────────────────────────────────────────────────┐         │
+│  │ SwitchControl with Mono Jack (official product)      │         │
+│  │  └─ 3.5mm mono jack accepts ANY passive switch       │         │
+│  │  └─ You can build Arduino/ESP32 controlled relay     │         │
+│  │  └─ No BLE reverse engineering needed                │         │
+│  └─────────────────────────────────────────────────────┘         │
+│                                                                   │
+│  <span class="hl2">PATH B — BLE GATT Sniffing (Uncharted, High Risk/Reward)</span>      │
+│  ┌─────────────────────────────────────────────────────┐         │
+│  │ Use nRF Connect for Mobile to scan MX2+ BLE service  │         │
+│  │ Identify GATT service/characteristic UUIDs            │         │
+│  │ Reverse-engineer the official app's BLE protocol      │         │
+│  │ Build custom app that speaks the same protocol        │         │
+│  │ ⚠ Risk: undocumented, may require firmware auth       │         │
+│  └─────────────────────────────────────────────────────┘         │
+│                                                                   │
+│  <span class="hl3">PATH C — Physical Relay Replacement (Low-Tech)</span>                │
+│  ┌─────────────────────────────────────────────────────┐         │
+│  │ Wire an ESP32/Arduino RELAY in parallel with the      │         │
+│  │ physical button. App controls the relay (simulates    │         │
+│  │ button press). Phone → WiFi/BLE → relay → button.    │         │
+│  │ ⚠ Does not replace the SwitchControl, augments it.   │         │
+│  └─────────────────────────────────────────────────────┘         │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<h3 id="s6a">6.1 The Mono Jack Path — Your Most Accessible Entry Point</h3>
+
+<div class="warn">
+<div class="warn-title">⚠ Connector architecture correction — important detail</div>
+<p>The 3.5mm mono jack is on the <strong>SwitchControl unit itself</strong> (the thumb button assembly), <strong>not</strong> on the SmartDrive motor. The cable running from the SwitchControl <em>back to</em> the motor is a <strong>proprietary multi-pin connector</strong>, likely a serial interface with a device-specific pinout. This means:</p>
+<ul>
+  <li>The mono jack lets <em>any</em> standard accessibility switch control the SwitchControl's electronics</li>
+  <li>The SwitchControl then translates that into the proprietary serial protocol for the motor</li>
+  <li>You don't need to reverse-engineer the serial protocol — the SwitchControl handles that bridge</li>
+  <li>But you <strong>cannot</strong> bypass the SwitchControl and talk directly to the motor without figuring out that proprietary connector</li>
+</ul>
+</div>
+
+<p>The <strong>SwitchControl with Mono Jack</strong> is an official Permobil product that adds a standard 3.5mm mono jack port to the SwitchControl. This is <strong>the most straightforward path</strong> to a custom controller because:</p>
+
+<ul>
+  <li>It accepts <strong>any standard mono jack switch</strong> — the same 3.5mm connector used in accessibility switches</li>
+  <li>It's a <strong>passive circuit</strong> — the jack is a simple contact closure. Short = button pressed, open = button released</li>
+  <li>You can build an <strong>ESP32 or Arduino</strong> that drives a relay or optocoupler across those same contacts, controlled by your app</li>
+  <li><strong>No BLE reverse engineering needed</strong> — you're operating at the electrical level, not the protocol level</li>
+  <li>The SwitchControl itself handles all the SmartDrive-specific signaling including the proprietary serial protocol to the motor</li>
+</ul>
+
+<p><strong>How it would work for your custom app:</strong></p>
+<pre>┌─────────────┐     Bluetooth/WiFi     ┌──────────────┐     3.5mm mono jack     ┌───────────────┐
+│ Your App    │────────────────────────→│ ESP32/Arduino │────────────────────────→│ SwitchControl │
+│ (Phone/PC)  │     control commands     │ + relay/opt  │     contact closure      │ → SmartDrive  │
+└─────────────┘                         └──────────────┘                         └───────────────┘</pre>
+
+<p><strong>Advantages of this approach:</strong></p>
+<ul>
+  <li><strong>Safety isolation:</strong> The SwitchControl button still works <em>in parallel</em> — you always have the physical button as a backup. A custom app failure doesn't leave you stranded</li>
+  <li><strong>No warranty voiding:</strong> You're not modifying the SmartDrive unit itself, just plugging a switch into an existing port</li>
+  <li><strong>No protocol work:</strong> The hardest part (encoding drive commands) is handled entirely by the SwitchControl</li>
+  <li><strong>Latched mode offload:</strong> Your app doesn't need to maintain constant connection — the SwitchControl handles latching</li>
+</ul>
+
+<div class="rec">
+<div class="rec-title">💡 Technical note on the mono jack</div>
+<p>Standard 3.5mm mono accessibility switches are simple SPST (Single Pole, Single Throw) momentary contacts. The SwitchControl's mono jack likely expect the same: <strong>tip = signal, sleeve = ground</strong>, normally open, momentary close = drive command. You can verify this with a multimeter when the SwitchControl is disconnected.</p>
+<p>A simple circuit: connect an ESP32 GPIO through an optocoupler (e.g., 4N35) to the mono jack tip. When your app says "drive," the ESP32 pulls the GPIO high, the optocoupler conducts, and the SwitchControl sees a button press. When the GPIO goes low, it releases. The optocoupler provides electrical isolation — protecting both you and the SmartDrive from voltage spikes or ground loops.</p>
+</div>
+
+<h3 id="s6b">6.2 Bluetooth BLE Reverse Engineering (The Uncharted Path)</h3>
+
+<div class="warn">
+<div class="warn-title">⚠ What the BLE protocol actually exposes (from real-world use)</div>
+<p>Based on user reports, the official SmartDrive MX2+ app (phone + wearable) exposes <strong>very limited</strong> controls via BLE:</p>
+<ul>
+  <li><strong>Speed presets</strong> — select from preconfigured speed levels</li>
+  <li><strong>Beep on/off toggle</strong> — reportedly spotty; doesn't always take effect</li>
+  <li><strong>Acceleration rate</strong> — adjust how quickly the motor ramps up</li>
+</ul>
+<p><strong>Notably absent:</strong> There is no discrete "stop now" command sent via BLE. The app uses <strong>gesture detection</strong> (tap pattern on the watch/phone) to infer a stop command. This means the phone sends "user stopped gesturing" rather than an explicit "command: stop motor." This is a critical design flaw — gesture inference is inherently less reliable than a direct command packet, and it means Bluetooth interference or CPU load on the watch can cause the stop signal to never be sent, matching exactly the failure mode documented in the 2023 PushTracker recall.</p>
+<p><strong>Hidden controls likely exist:</strong> The BLE GATT profile almost certainly has characteristics for motor command, status reporting, and configuration that the official app simply doesn't expose in its UI. A full BLE reverse-engineering effort would likely uncover direct motor control commands that could form the basis of a reliable custom start/stop mechanism.</p>
+</div>
+
+<p>As of August 2026, <strong>there is no publicly documented BLE protocol</strong> for the SmartDrive MX2+. Searches for GATT service UUIDs, characteristic handles, or packet structures return nothing. This is a blank slate. If you want to go this route, here's the approach:</p>
+
+<ol>
+  <li><strong>Install nRF Connect for Mobile</strong> (Nordic Semiconductor, free on Google Play/App Store)</li>
+  <li><strong>Pair the SmartDrive with the official app</strong> on one device</li>
+  <li><strong>Use nRF Connect to scan</strong> for BLE devices — the SmartDrive should advertise with a recognizable name</li>
+  <li><strong>Connect and discover GATT services</strong> — enumerate all service UUIDs and characteristics</li>
+  <li><strong>Enable notifications</strong> on relevant characteristics</li>
+  <li><strong>Observe packet exchanges</strong> while the official app sends commands (start, stop, set speed)</li>
+  <li><strong>Map command patterns to device responses</strong></li>
+  <li><strong>Build a proof-of-concept</strong> using Python's <code>bleak</code> library or a mobile BLE development framework</li>
+</ol>
+
+<div class="warn">
+<div class="warn-title">⚠ Major caveats on BLE reverse engineering</div>
+<ul>
+  <li><strong>No known prior art:</strong> No one has published this work publicly. You'd be breaking new ground entirely</li>
+  <li><strong>May require authentication:</strong> The SmartDrive may require pairing/bonding with specific credentials before accepting commands</li>
+  <li><strong>Firmware updates could break compatibility:</strong> Any protocol you discover could change with a firmware update</li>
+  <li><strong>Safety liability:</strong> A bug in your custom BLE implementation could cause the same kind of "won't stop" incidents documented in the recalls. Build in a hardware failsafe.</li>
+  <li><strong>No official developer program:</strong> Permobil/Max Mobility does not offer a public API or SDK for the SmartDrive</li>
+  <li><strong>However:</strong> Max Mobility <em>does</em> have a GitHub organization at <a href="https://github.com/Max-Mobility">github.com/Max-Mobility</a> with a "python-bluetooth" repository — this may be general BLE tooling rather than SmartDrive-specific, but it's worth investigating</li>
+</ul>
+</div>
+
+<div class="danger">
+<div class="danger-title">🚨 Safety Requirement — Build a Physical Kill Switch Into Any Custom Controller</div>
+<p>Every documented incident — the stage fall, the near-red-light, the stop sign — shares one common thread: <strong>the user could not stop the device</strong>. If you build a custom controller, you MUST ensure there is a <strong>reliable, independent, physical way to cut power</strong> or disengage the motor. The SmartDrive does have a physical power button, but when it's under your seat mid-roll, it's hard to reach. Consider:</p>
+<ul>
+  <li>A lanyard-pull kill switch wired inline with the motor power</li>
+  <li>A separate wired emergency stop button in a consistent, reachable location</li>
+  <li>Never removing or disabling the existing SwitchControl — always keep it as a backup</li>
+  <li>If using the Mono Jack path: design your circuit so the physical button takes priority over the relay</li>
+</ul>
+</div>
+
+<h3 id="s6c">6.3 Vanderbilt Design Project — Academic Interest</h3>
+
+<p>A <strong>Vanderbilt University School of Engineering</strong> capstone project in Spring 2026 (sponsored by Permobil) tackled exactly this problem. Project <strong>BME-10: "Ergonomic Bluetooth Control for Permobil SmartDrive"</strong> — the description reads:</p>
+
+<p><em>"Design an ergonomically designed, Bluetooth-connected, haptic feedback controller for the Permobil SmartDrive MX2+ power assist device."</em></p>
+
+<p>This confirms Permobil is at least <em>aware</em> of the desire for better controls and may be exploring alternatives internally. However, the Vanderbilt Design Day booklet does not contain technical details, schematics, or code — it's a student project showcase. No public deliverables were found.</p>
+
+<h3 id="s6d">6.4 Building a Custom App — What's Feasible</h3>
+
+<p>Given the current landscape, here's what's realistic for a custom app:</p>
+
+<table>
+  <tr><th>Approach</th><th>Difficulty</th><th>Safety</th><th>Capability</th><th>Recommended</th></tr>
+  <tr><td>ESP32 relay via mono jack</td><td><span class="tag tag-green">Low</span></td><td><span class="tag tag-green">High</span> (physical backup intact)</td><td>Start/stop only</td><td><span class="tag tag-green">✅ Yes</span></td></tr>
+  <tr><td>BLE sniff + custom mobile app</td><td><span class="tag tag-red">Very High</span></td><td><span class="tag tag-orange">Medium</span></td><td>Full control (if protocol discovered)</td><td><span class="tag tag-orange">⚠ Risky</span></td></tr>
+  <tr><td>BLE app via official app piggyback</td><td><span class="tag tag-orange">High</span></td><td><span class="tag tag-orange">Low-Medium</span></td><td>Limited (no direct protocol)</td><td><span class="tag tag-red">❌ No</span></td></tr>
+  <tr><td>Physical emergency cutoff only</td><td><span class="tag tag-green">Low</span></td><td><span class="tag tag-green">Highest</span></td><td>Stop-only</td><td><span class="tag tag-green">✅ Do First</span></td></tr>
+</table>
+
+<div class="rec">
+<div class="rec-title">💡 Most realistic path for your first custom controller</div>
+<ol>
+  <li><strong>Get the SwitchControl with Mono Jack</strong> (ask Permobil as your recall replacement if you haven't already)</li>
+  <li><strong>Build an ESP32-based relay controller</strong> that sits between your phone app and the mono jack. Use optocoupler isolation for safety.</li>
+  <li><strong>Write a simple app</strong> (Flutter, or even a web app with WebBluetooth) that sends drive/stop commands to the ESP32 over BLE or WiFi</li>
+  <li><strong>Keep the physical SwitchControl always connected in parallel</strong> — your app augments, never replaces, the physical button</li>
+  <li><strong>Add a physical emergency stop</strong> — a large button you can reliably slap, or a pull-cord wired into the motor power circuit</li>
+  <li><strong>If you want full BLE protocol control:</strong> start with nRF Connect on a phone that has the official SmartDrive MX2+ app and attempt to map the GATT service. Document and share what you find — the community has nothing.</li>
+</ol>
+</div>
+
+<h2 id="s7">7. Official Technical Documentation</h2>
+
+<p>Links to all official documentation found during research:</p>
+
+<table>
+  <tr><th>Document</th><th>Link</th></tr>
+  <tr><td><strong>FDA Class I Recall — Worldwide Removal (Aug 12, 2025)</strong></td><td><a href="https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/max-mobility-permobil-announces-worldwide-expanded-recall-and-removal-all-speedcontrol-dials-market">FDA.gov</a></td></tr>
+  <tr><td><strong>FDA Recall — Original (Jan 2025)</strong></td><td><a href="https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/max-mobility-permobil-issues-nationwide-recall-smartdrive-speed-control-dial-due-motor-being">FDA.gov</a></td></tr>
+  <tr><td><strong>Permobil Recall Hub / Replacement Portal</strong></td><td><a href="https://hub.permobil.com/max-mobility/permobil-speedcontrol-dial-recall">hub.permobil.com</a></td></tr>
+  <tr><td><strong>Permobil SmartDrive Hub (all resources)</strong></td><td><a href="https://hub.permobil.com/smartdrive">hub.permobil.com/smartdrive</a></td></tr>
+  <tr><td><strong>SmartDrive SwitchControl Product Page</strong></td><td><a href="https://www.permobil.com/en-us/products/power-assist/smartdrive-switchcontrol">permobil.com</a></td></tr>
+  <tr><td><strong>SwitchControl with Mono Jack Installation PDF</strong></td><td><a href="https://hub.permobil.com/hubfs/Installing%20SwitchControl%20with%20Mono%20Jack.pdf">Permobil PDF</a></td></tr>
+  <tr><td><strong>SmartDrive MX2+ User Manual (PushTracker E2)</strong></td><td><a href="https://device.report/manual/3807362">device.report</a></td></tr>
+  <tr><td><strong>SmartDrive MX2 User Manual (PSDF)</strong></td><td><a href="https://shermanoaksmedical.s3.us-west-1.amazonaws.com/137c631fe2234829a931b9183e4280a7/SmartDrive%20MX2%2B%20Manual.pdf">Sherman Oaks Medical (PDF)</a></td></tr>
+  <tr><td><strong>SmartDrive Questions &amp; Answers (Better Mobility)</strong></td><td><a href="https://www.bettermobility.co.uk/downloads/SMARTMX2_questions_and_answers.pdf">bettermobility.co.uk</a></td></tr>
+  <tr><td><strong>Permobil Product Updates (including firmware v3.3, v3.2)</strong></td><td><a href="https://www.permobil.com/en-ca/permobil-product-updates">permobil.com</a></td></tr>
+  <tr><td><strong>SmartDrive MX2+ App (Google Play)</strong></td><td><a href="https://play.google.com/store/apps/details?id=com.permobil.smartdrive.wearos">Google Play</a></td></tr>
+  <tr><td><strong>SmartDrive MX2+ App (Apple App Store)</strong></td><td><a href="https://apps.apple.com/ca/app/smartdrive-mx2/id1575416237">App Store</a></td></tr>
+  <tr><td><strong>Permobil Support</strong></td><td><a href="https://hub.permobil.com/support">hub.permobil.com/support</a></td></tr>
+  <tr><td><strong>Permobil/Max Mobility GitHub Organization</strong></td><td><a href="https://github.com/Max-Mobility">github.com/Max-Mobility</a></td></tr>
+  <tr><td><strong>MAUDE Database Search (Product Code ITI)</strong></td><td><a href="https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/search.cfm">accessdata.fda.gov</a></td></tr>
+  <tr><td><strong>MAUDE Aggregate for ITI (Innolitics)</strong></td><td><a href="https://maude.innolitics.com/productcodes/ITI">innolitics.com</a></td></tr>
+  <tr><td><strong>FDA Recall Alert Page</strong></td><td><a href="https://www.fda.gov/medical-devices/medical-device-recalls-and-early-alerts/recall-alert-max-mobilitypermobil-removes-all-speedcontrol-dials-used-smartdrive-mx2-power-assist">FDA.gov</a></td></tr>
+</table>
+
+<h2 id="s8">8. Recommended Approach for Your Custom App</h2>
+
+<div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│         PROPOSED HYBRID ARCHITECTURE FOR YOUR CUSTOM APP         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  <span class="hl">PHASE 1 — Safety First (Week 1):</span>                             │
+│  ┌──────────────────────────────────────────────────────┐        │
+│  │ Add a physical emergency kill switch (wired, big      │        │
+│  │ button or pull-cord that cuts motor power)            │        │
+│  │ Document where your current SwitchControl is mounted  │        │
+│  │ and whether cable routing is optimal                  │        │
+│  └──────────────────────────────────────────────────────┘        │
+│                                                                   │
+│  <span class="hl2">PHASE 2 — Mono Jack Controller (Week 2-3):</span>                   │
+│  ┌──────────────────────────────────────────────────────┐        │
+│  │ Get SwitchControl with Mono Jack from Permobil        │        │
+│  │ Build ESP32 relay circuit (optocoupler-isolated)      │        │
+│  │ Write simple phone app → ESP32 → mono jack → drive    │        │
+│  │ Keep physical button as parallel always-on backup     │        │
+│  └──────────────────────────────────────────────────────┘        │
+│                                                                   │
+│  <span class="hl3">PHASE 3 — Investigate BLE (Optional):</span>                         │
+│  ┌──────────────────────────────────────────────────────┐        │
+│  │ nRF Connect scan of official app + SmartDrive traffic │        │
+│  │ Document GATT services and characteristics            │        │
+│  │ Publish findings (the community needs this data)      │        │
+│  │ Decide if full BLE replacement is worth the risk      │        │
+│  └──────────────────────────────────────────────────────┘        │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<div class="rec">
+<div class="rec-title">💡 Controls you'd gain that you otherwise don't have</div>
+<ul>
+  <li><strong>Speed ramping curves</strong> — the SwitchControl is either ON or OFF (with a fixed acceleration curve). A custom controller could implement gradual speed adjustment.</li>
+  <li><strong>Toggle between Momentary and Latched mode from the app</strong> — without having to reach under your seat to flip the physical switch.</li>
+  <li><strong>Fine speed control</strong> — if you go the BLE path, you could implement throttle-style control (like a joystick) instead of binary ON/OFF.</li>
+  <li><strong>Safety zone lockout</strong> — geo-fence areas where the SmartDrive is disabled (e.g., near stairs, busy intersections).</li>
+  <li><strong>Status indicators</strong> — battery level, connection quality, mode indication on your phone screen.</li>
+  <li><strong>Emergency stop</strong> with haptic phone feedback — phone vibration + auto-stop if BLE disconnects unexpectedly.</li>
+  <li><strong>Activity logging</strong> — track distance, battery cycles, activation frequency for maintenance planning.</li>
+</ul>
+</div>
+
+<h2 id="s9">9. Sources &amp; Links</h2>
+
+<ol style="font-size:0.9rem;">
+  <li><strong>FDA — Worldwide Expanded Recall (Aug 12, 2025):</strong> <a href="https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/max-mobility-permobil-announces-worldwide-expanded-recall-and-removal-all-speedcontrol-dials-market">fda.gov</a></li>
+  <li><strong>FDA — Original Nationwide Recall (Jan 2025):</strong> <a href="https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts/max-mobility-permobil-issues-nationwide-recall-smartdrive-speed-control-dial-due-motor-being">fda.gov</a></li>
+  <li><strong>FDA — Recall Alert / Summary:</strong> <a href="https://www.fda.gov/medical-devices/medical-device-recalls-and-early-alerts/recall-alert-max-mobilitypermobil-removes-all-speedcontrol-dials-used-smartdrive-mx2-power-assist">fda.gov</a></li>
+  <li><strong>Permobil — SpeedControl Dial Voluntary Field Action Hub:</strong> <a href="https://hub.permobil.com/max-mobility/permobil-speedcontrol-dial-recall">hub.permobil.com</a></li>
+  <li><strong>Permobil — Product Updates (firmware v3.2, v3.3):</strong> <a href="https://www.permobil.com/en-ca/permobil-product-updates">permobil.com</a></li>
+  <li><strong>Permobil — SwitchControl Product Page:</strong> <a href="https://www.permobil.com/en-us/products/power-assist/smartdrive-switchcontrol">permobil.com</a></li>
+  <li><strong>Permobil — SwitchControl with Mono Jack Installation:</strong> <a href="https://hub.permobil.com/hubfs/Installing%20SwitchControl%20with%20Mono%20Jack.pdf">PDF</a></li>
+  <li><strong>New Mobility — "Controller Recall Puts SmartDrive Safety in the Spotlight" (Aug 2023):</strong> <a href="https://newmobility.com/controller-recall-puts-smartdrive-safety-in-the-spotlight/">newmobility.com</a></li>
+  <li><strong>Canada Recall Notice:</strong> <a href="https://recalls-rappels.canada.ca/en/alert-recall/smartdrive-mx2">recalls-rappels.canada.ca</a></li>
+  <li><strong>KBA Attorneys — Summary of Recall Timeline:</strong> <a href="https://kbaattorneys.com/permobile-wheelchair-recall-the-max-mobility-permobil-smartdrive-speed-control-dial/">kbaattorneys.com</a></li>
+  <li><strong>TruLaw — FDA Warning Analysis:</strong> <a href="https://trulaw.com/fda/fda-warns-citing-serious-injuries-maxmobility-permobil-recalls-smartdrive-speed-control-dials-used-with-their-smartdrive-mx2-power-assist-devices/">trulaw.com</a></li>
+  <li><strong>Reddit r/wheelchairs — "I absolutely hate my SmartDrive":</strong> <a href="https://www.reddit.com/r/wheelchairs/comments/1t5qkwd/i_absolutely_hate_my_smartdrive/">reddit.com</a></li>
+  <li><strong>Reddit r/wheelchairs — "Fed Up of Smartdrive":</strong> <a href="https://www.reddit.com/r/wheelchairs/comments/1qv1x2v/fed_up_of_smartdrive/">reddit.com</a></li>
+  <li><strong>Reddit r/wheelchairs — "The new smart drive switch is horrible!":</strong> <a href="https://www.reddit.com/r/wheelchairs/comments/1rsr50k/rant_the_new_smart_drive_switch_is_horrible/">reddit.com</a></li>
+  <li><strong>Reddit r/wheelchairs — "Has anyone received their replacement switches yet?":</strong> <a href="https://www.reddit.com/r/wheelchairs/comments/1n8yfd4/has_anyone_received_their_smartdrive_replacement/">reddit.com</a></li>
+  <li><strong>Reddit r/wheelchairs — "SmartDrive troubles?":</strong> <a href="https://www.reddit.com/r/wheelchairs/comments/1fttvgq/smartdrive_troubles/">reddit.com</a></li>
+  <li><strong>Reddit r/wheelchairs — "Is anyone else dissatisfied with their SmartDrive?":</strong> <a href="https://www.reddit.com/r/wheelchairs/comments/1gum638/is_anyone_else_dissatisfied_with_their_smartdrive/">reddit.com</a></li>
+  <li><strong>MAUDE — Event Report 24395317 (SwitchControl + Buddy Button unintended activation):</strong> <a href="https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfmaude/detail.cfm?mdrfoi__id=24395317&pc=ITI">accessdata.fda.gov</a></li>
+  <li><strong>MAUDE — Aggregate reports for product code ITI (Innolitics):</strong> <a href="https://maude.innolitics.com/productcodes/ITI">innolitics.com</a></li>
+  <li><strong>Max Mobility — GitHub Organization:</strong> <a href="https://github.com/Max-Mobility">github.com/Max-Mobility</a></li>
+  <li><strong>Permobil — Press Release: Worldwide Expanded Recall (Aug 12, 2025):</strong> <a href="https://www.permobil.com/media-center/press-releases/max-mobility-permobil-announces-worldwide-expanded-recall-and-removal-of-all-speedcontrol-dials-from-the-market-due-to-intermittent-cable-connection-concerns-of-the-dial-with-the-smartdrive-mx2plus-motor-users-must-use-an-alternate-control-">permobil.com</a></li>
+  <li><strong>Permobil — SmartDrive Hub (all resources):</strong> <a href="https://hub.permobil.com/smartdrive">hub.permobil.com/smartdrive</a></li>
+  <li><strong>Vanderbilt Design Day 2026 Booklet — BME-10 Ergonomic Bluetooth Control (Permobil project):</strong> <a href="https://cdn.vanderbilt.edu/vu-sub/wp-content/uploads/sites/282/2026/04/24151941/2026-DesignDay-Booklet-4.10.26.pdf">Vanderbilt (PDF)</a></li>
+  <li><strong>SmartDrive MX2 User Manual (Panthera):</strong> <a href="https://www.panthera.se/panthera/documentation/bruks/IFU_smartdrive_ENG.pdf">PDF</a></li>
+  <li><strong>Permobil — Compatible Wearable Devices:</strong> <a href="https://www.permobil.com/en-us/products/power-assist/smartdrive-mx2plus-premium-wearables">permobil.com</a></li>
+</ol>
+
+<div class="footer">
+Research conducted by Hermes Agent (Hermosa Vex) — 2026-08-09<br>
+Sources cited above, verified against FDA MAUDE, New Mobility, Permobil official resources, and community forums.<br>
+This is a research report only. Any homebrew development involving medical devices carries inherent risks and should be undertaken with appropriate safety measures including physical emergency stops.<br>
+<strong>File:</strong> F:\agent-research\permobil-smartdrive-mx2plus-safety-research.html
+</div>
+
+</body>
+</html>

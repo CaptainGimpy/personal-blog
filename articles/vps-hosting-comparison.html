@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Low-Cost VPS for Agent Hosting — Comparison</title>
+<style>
+  :root {
+    --bg: #0d0e12; --bg2: #12141a; --panel: #181b22; --panel2: #1d212a;
+    --border: #262c37; --ink: #e9ebf1; --mut: #9aa4b4; --dim: #6b7485;
+    --accent: #e0a83c; --good: #7ac76a; --warn: #d98a5f; --danger: #d16f6f;
+    --mono: "SFMono-Regular", Consolas, monospace; --sans: -apple-system, BlinkMacSystemFont, Inter, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    line-height: 1.7; padding: 0 24px 60px; -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+  header { padding: 40px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+  .kicker { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  h1 { font-weight: 700; font-size: 28px; }
+  .lede { margin-top: 10px; font-size: 14px; color: var(--mut); max-width: 40em; }
+  .meta { display: flex; gap: 16px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 11px; color: var(--dim); flex-wrap: wrap; }
+
+  h2 { font-weight: 600; font-size: 22px; margin: 36px 0 6px; }
+  h3 { font-weight: 600; font-size: 16px; margin: 20px 0 6px; color: var(--accent); }
+  p { margin-bottom: 12px; font-size: 14px; color: var(--mut); }
+  p strong { color: var(--ink); }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 10px; font-family: var(--mono); font-weight: 600; letter-spacing: 0.04em; margin-right: 4px; }
+  .green { background: #1a3a1a; color: var(--good); }
+  .yellow { background: #3a2e1a; color: var(--warn); }
+  .red { background: #3a1a1a; color: var(--danger); }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--dim); }
+  td { color: var(--mut); }
+  .good { color: var(--good); }
+  .warn { color: var(--warn); }
+  .danger { color: var(--danger); }
+
+  .provider { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin: 14px 0; }
+  .provider .name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+  .provider .price { font-family: var(--mono); font-size: 20px; color: var(--good); }
+  .provider .price-note { font-size: 12px; color: var(--dim); }
+  .specs { display: flex; gap: 12px; margin: 8px 0; flex-wrap: wrap; }
+  .specs span { font-size: 12px; font-family: var(--mono); color: var(--mut); background: var(--bg2); padding: 4px 10px; border-radius: 6px; }
+
+  .callout { background: var(--panel); border-left: 3px solid var(--accent); border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 14px; color: var(--mut); }
+  .callout strong { color: var(--ink); }
+
+  .verdict-box { background: #141a10; border: 1px solid #1a3a1a; border-radius: 10px; padding: 18px; margin: 20px 0; }
+  .verdict-box h3 { color: var(--good); margin-top: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="kicker">Research Report · August 13, 2026</div>
+  <h1>Low-Cost VPS for Agent Hosting</h1>
+  <p class="lede">Ranking VPS providers by cost and feature fit for running OmniRoute + Hermes Agent in an always-on Docker environment. Focused on plans under $10/month that can actually handle the stack.</p>
+  <div class="meta">
+    <span>Use Case: OmniRoute (Docker) + Hermes Agent</span>
+    <span>Budget Target: $3–$10/mo</span>
+  </div>
+</header>
+
+<section>
+  <h2>The Bottom Line (TL;DR)</h2>
+  <div class="verdict-box">
+    <h3>🏆 Winner: Hetzner CX22/CX23</h3>
+    <p style="margin: 6px 0; font-size: 13px;"><strong>€3.79–€5.99/mo</strong> · 2 vCPU · 4 GB RAM · 40 GB NVMe · Docker-ready · EU data centers · <strong>No hidden gotchas</strong></p>
+    <p style="margin: 0; font-size: 13px;">Runner-up: <strong>InterServer</strong> at $3/mo if Hetzner's EU-only regions are a concern. Oracle's Always Free tier exists but has real reclaim risk.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Quick Comparison</h2>
+  <table>
+    <tr><th>Provider</th><th>Entry Price</th><th>RAM</th><th>vCPU</th><th>Storage</th><th>Docker</th><th>Verdict</th></tr>
+    <tr>
+      <td><strong>Hetzner</strong></td>
+      <td class="good">€3.79/mo</td><td>4 GB</td><td>2</td><td>40 GB NVMe</td>
+      <td class="good">✅</td><td class="good">Best value</td>
+    </tr>
+    <tr>
+      <td><strong>InterServer</strong></td>
+      <td class="good">$3.00/mo</td><td>2 GB</td><td>1</td><td>40 GB SSD</td>
+      <td class="good">✅</td><td class="good">Cheapest viable</td>
+    </tr>
+    <tr>
+      <td><strong>Contabo</strong></td>
+      <td class="good">~$5.50/mo</td><td>4 GB</td><td>4</td><td>100 GB NVMe</td>
+      <td class="good">✅</td><td class="warn">Most specs, but CPU throttles</td>
+    </tr>
+    <tr>
+      <td><strong>DigitalOcean</strong></td>
+      <td class="warn">$6.00/mo</td><td>1 GB</td><td>1</td><td>25 GB SSD</td>
+      <td class="good">✅</td><td class="warn">Expensive for specs</td>
+    </tr>
+    <tr>
+      <td><strong>Hostinger</strong></td>
+      <td class="warn">$5.84/mo</td><td>4 GB</td><td>2</td><td>40 GB NVMe</td>
+      <td class="good">✅</td><td class="warn">One-click Hermes template</td>
+    </tr>
+    <tr>
+      <td><strong>Vultr</strong></td>
+      <td class="warn">$5.00/mo</td><td>1 GB</td><td>1</td><td>25 GB SSD</td>
+      <td class="good">✅</td><td class="danger">1GB not enough</td>
+    </tr>
+    <tr>
+      <td><strong>Oracle Free</strong></td>
+      <td class="good">$0.00/mo</td><td>12 GB</td><td>2</td><td>~120 GB</td>
+      <td class="good">✅</td><td class="danger">Reclaim risk + Arm arch</td>
+    </tr>
+    <tr>
+      <td><strong>RackNerd</strong></td>
+      <td class="good">$15/yr</td><td>1 GB</td><td>1</td><td>20 GB SSD</td>
+      <td>⚠️ Tight</td><td class="warn">Ultra budget, ultra basic</td>
+    </tr>
+  </table>
+</section>
+
+<section>
+  <h2>Provider Deep Dives</h2>
+
+  <div class="provider">
+    <div class="name">1. Hetzner <span class="tag green">BEST OVERALL</span></div>
+    <div class="price">€3.79–€5.99/mo</div>
+    <div class="specs">
+      <span>2 vCPU</span><span>4 GB RAM</span><span>40 GB NVMe</span><span>Docker ✅</span><span>EU data centers</span>
+    </div>
+    <p><strong>CX22</strong> (€3.79/mo): 2 vCPU, 4 GB RAM, 40 GB NVMe — enough for OmniRoute + basic Hermes.</p>
+    <p><strong>CX23</strong> (€5.99/mo): same CPU/RAM, 80 GB NVMe — more headroom for Hermes + logs + cache.</p>
+    <p><strong>Pros:</strong> Best price-to-performance in the market. No hidden fees. Full root access. Excellent Docker support. Rock-solid uptime.</p>
+    <p><strong>Cons:</strong> EU-only data centers (Germany, Finland). Not ideal if you're on the US West Coast. Self-managed — you do all setup.</p>
+    <p><strong>Fit for you:</strong> ✅ Perfect. 4 GB RAM is enough for Docker-based OmniRoute + a lightweight Hermes session. Set it and forget it.</p>
+  </div>
+
+  <div class="provider">
+    <div class="name">2. InterServer <span class="tag green">CHEAPEST VIABLE</span></div>
+    <div class="price">$3.00/mo</div>
+    <div class="specs">
+      <span>1 vCPU</span><span>2 GB RAM</span><span>40 GB SSD</span><span>Docker ⚠️ tight</span><span>US data centers</span>
+    </div>
+    <p>$3/mo is hard to beat. 2 GB RAM and 1 vCPU is tight but workable for a stripped-down OmniRoute setup. Hermes would be constrained but functional for basic use.</p>
+    <p><strong>Pros:</strong> Cheapest on the list. US data centers. Quick provisioning. Full root access.</p>
+    <p><strong>Cons:</strong> 2 GB RAM leaves no headroom. OmniRoute alone uses ~600MB, Hermes adds overhead. One container eating swap = everything slows down.</p>
+    <p><strong>Fit for you:</strong> ⚠️ Tight but workable. If budget is absolutely critical, this runs. But you'll feel the RAM limit.</p>
+  </div>
+
+  <div class="provider">
+    <div class="name">3. Contabo <span class="tag yellow">MOST SPECS PER DOLLAR</span></div>
+    <div class="price">~$5.50/mo</div>
+    <div class="specs">
+      <span>4 vCPU</span><span>4 GB RAM</span><span>100 GB NVMe</span><span>Docker ✅</span><span>US + EU</span>
+    </div>
+    <p>Look at those specs: 4 vCPU, 4 GB RAM, 100 GB NVMe for ~$5.50. On paper, best value on the list.</p>
+    <p><strong>Pros:</strong> Insane specs for the price. 100 GB storage means room for Hermes sessions, logs, and model caches. US data centers available.</p>
+    <p><strong>Cons:</strong> CPU is shared and throttles under sustained load. Known for inconsistent performance. Some users report network issues during peak hours.</p>
+    <p><strong>Fit for you:</strong> ⚠️ Great on paper, but the CPU throttling is a real issue for agent workloads that need consistent response times. Fine for OmniRoute routing, less great for Hermes latency.</p>
+  </div>
+
+  <div class="provider">
+    <div class="name">4. Hostinger <span class="tag yellow">EASIEST SETUP</span></div>
+    <div class="price">$5.84/mo</div>
+    <div class="specs">
+      <span>2 vCPU</span><span>4 GB RAM</span><span>40 GB NVMe</span><span>Docker ✅</span><span>One-click Hermes template</span>
+    </div>
+    <p>Hostinger's KVM 2 plan has a one-click Docker template for Hermes Agent. No manual setup — you spin it up and it's ready.</p>
+    <p><strong>Pros:</strong> One-click Hermes deployment. 4 GB RAM is the sweet spot. US data centers. Their hPanel is decent. Good support.</p>
+    <p><strong>Cons:</strong> Slightly more expensive than Hetzner for the same specs. Renewal pricing jumps after intro period. Some Docker networking quirks reported.</p>
+    <p><strong>Fit for you:</strong> ✅ Solid option if you want the easiest path. The one-click template saves setup time. Pricing is fair at intro rate.</p>
+  </div>
+
+  <div class="provider">
+    <div class="name">5. Oracle Cloud Always Free <span class="tag yellow">FREE BUT RISKY</span></div>
+    <div class="price">$0.00/mo</div>
+    <div class="specs">
+      <span>2 OCPU</span><span>12 GB RAM</span><span>~120 GB</span><span>Docker ✅</span><span>Arm architecture</span>
+    </div>
+    <p>Oracle's free tier is legit — 12 GB RAM, 2 OCPU, reasonable storage, all free forever. But: it's ARM architecture (Ampere), not x86.</p>
+    <p><strong>Pros:</strong> Free. 12 GB RAM is the most on this list by far. Docker runs fine on ARM. Good for learning.</p>
+    <p><strong>Cons:</strong> ARM architecture — OmniRoute's Docker image must support ARM (check). Oracle is known to reclaim free-tier instances without notice if resources are tight. No support.</p>
+    <p><strong>Fit for you:</strong> ⚠️ Worth trying since it's free, but don't rely on it. The ARM question is real — verify OmniRoute's ARM image exists before committing.</p>
+  </div>
+
+  <div class="provider">
+    <div class="name">6. DigitalOcean <span class="tag yellow">BEST DX</span></div>
+    <div class="price">$6.00/mo</div>
+    <div class="specs">
+      <span>1 vCPU</span><span>1 GB RAM</span><span>25 GB SSD</span><span>Docker ✅</span><span>Global regions</span>
+    </div>
+    <p>The $6 basic droplet only has 1 GB RAM — that's not enough for OmniRoute + Hermes together. You'd need the $12/mo (2 GB) plan.</p>
+    <p><strong>Pros:</strong> Excellent documentation and community guides. Great control panel. Fast provisioning. Worldwide data centers.</p>
+    <p><strong>Cons:</strong> Expensive for what you get. The entry-level plan is under-specced for agent hosting. You're paying for the brand and UI.</p>
+    <p><strong>Fit for you:</strong> ❌ Not worth it at entry level. The $12/mo plan is competitive but Hetzner/Contabo beat it on price.</p>
+  </div>
+
+  <div class="provider">
+    <div class="name">7. RackNerd <span class="tag yellow">ULTRA BUDGET</span></div>
+    <div class="price">$15/year</div>
+    <div class="specs">
+      <span>1 vCPU</span><span>1 GB RAM</span><span>20 GB SSD</span><span>Docker ⚠️ tight</span><span>US data centers</span>
+    </div>
+    <p>$15/year is absurdly cheap. But 1 GB RAM and 1 vCPU means Docker + OmniRoute is going to struggle. Fine for a simple proxy, not for a full stack.</p>
+    <p><strong>Pros:</strong> Price. Annual billing makes it dirt cheap. US data centers. Good for lightweight tasks.</p>
+    <p><strong>Cons:</strong> 1 GB RAM is too tight for OmniRoute + Hermes. No room for OS overhead + Docker + both services. You'd be on swap constantly.</p>
+    <p><strong>Fit for you:</strong> ❌ Too tight. Even OmniRoute alone would be uncomfortable. Skip this one for agent hosting.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Use Case Analysis</h2>
+
+  <h3>What You're Actually Running</h3>
+  <p><strong>OmniRoute (Docker container):</strong> ~600–800 MB RAM idle, bursts to 1.2–1.5 GB under load. Runs on port 20128. Needs Docker available.</p>
+  <p><strong>Hermes Agent:</strong> ~300–500 MB for the backend + session management. Needs Python, tooling, and some disk for session logs.</p>
+  <p><strong>Overhead:</strong> OS (~300 MB), Docker daemon (~150 MB), networking, monitoring. <strong>Real minimum: 2 GB RAM</strong>, comfortable: <strong>4 GB RAM</strong>.</p>
+
+  <div class="callout">
+    <strong>Bottom line:</strong> Most $3–$5 VPS plans with 1 GB RAM are too tight. The sweet spot is <strong>2–4 GB RAM, 2 vCPU, ~$5/mo</strong>. Hetzner CX22 at €3.79/mo is the price leader for adequate specs. InterServer at $3/mo works if you're budget-strapped and careful about what else runs on the box.
+  </div>
+</section>
+
+<section>
+  <h2>What About Managed Hosting?</h2>
+  <p>There are services that sell managed Hermes Agent hosting (Agent 37 at $3.99/mo, LumaDock at $4.99/mo, etc.). These handle the OS maintenance, updates, and uptime for you.</p>
+  <p><strong>Trade-off:</strong> You get convenience but lose control. You can't easily run additional Docker containers (like OmniRoute) on most managed plans. They're locked to Hermes-only.</p>
+  <p><strong>For your use case:</strong> You need both Hermes <em>and</em> OmniRoute on the same box. Managed hosting that only supports one service doesn't fit. A raw VPS is the better choice.</p>
+</section>
+
+<section>
+  <h2>Recommendation</h2>
+  <div class="verdict-box">
+    <h3>Go with Hetzner CX22 (€3.79/mo) or CX23 (€5.99/mo)</h3>
+    <p style="margin: 6px 0; font-size: 13px;">Best price-to-performance. 4 GB RAM handles OmniRoute + Hermes comfortably. Docker works out of the box. No hidden fees, no reclaim risk. The only downside is EU-only data centers, but latency from the US West Coast is ~120-160ms — fine for API traffic.</p>
+    <p style="margin: 0; font-size: 13px;">If US region is critical: <strong>InterServer at $3/mo</strong> for the cheapest viable option, or <strong>Hostinger at $5.84/mo</strong> for the one-click Hermes template ease.</p>
+  </div>
+</section>
+
+<div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12px; color: var(--dim);">
+  Generated August 13, 2026 · Agent Research bucket<br>
+  Use case: OmniRoute (Docker) + Hermes Agent always-on
+</div>
+
+</div>
+</body>
+</html>

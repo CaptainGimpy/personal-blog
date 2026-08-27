@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Agent × Obsidian Vault — Memory &amp; Skill Architecture Research</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #79c0ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --pink: #f778ba;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 2.2rem; margin-bottom: 0.25rem; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; color: var(--accent2); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  h3 { font-size: 1.15rem; margin: 1.8rem 0 0.6rem; color: var(--green); }
+  h4 { font-size: 1rem; margin: 1.2rem 0 0.4rem; color: var(--orange); }
+  p, li { color: var(--text); margin-bottom: 0.6rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .meta { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+  code { background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 0.88em; font-family: 'Monaspace', 'Fira Code', 'JetBrains Mono', monospace; }
+  pre {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0.8rem 0 1.5rem;
+    font-size: 0.85rem;
+    font-family: 'Monaspace', 'Fira Code', 'JetBrains Mono', monospace;
+    line-height: 1.5;
+    color: #c9d1d9;
+  }
+  .tag {
+    display: inline-block;
+    background: rgba(88,166,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.25);
+    border-radius: 3px;
+    padding: 1px 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  .tag-green { background: rgba(63,185,80,0.12); color: var(--green); border-color: rgba(63,185,80,0.25); }
+  .tag-orange { background: rgba(210,153,34,0.12); color: var(--orange); border-color: rgba(210,153,34,0.25); }
+  .tag-purple { background: rgba(188,140,255,0.12); color: var(--purple); border-color: rgba(188,140,255,0.25); }
+  .tag-red { background: rgba(248,81,73,0.12); color: var(--red); border-color: rgba(248,81,73,0.25); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.5rem;
+    font-size: 0.9rem;
+  }
+  th, td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--bg2); font-weight: 600; color: var(--text); }
+  td { background: var(--bg3); }
+  .arch-diagram {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.2rem 0;
+    text-align: center;
+    font-family: 'Monaspace', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--text-dim);
+  }
+  .arch-diagram .hl { color: var(--accent); font-weight: 600; }
+  .arch-diagram .hl2 { color: var(--green); }
+  .arch-diagram .hl3 { color: var(--purple); }
+  .arch-diagram .hl4 { color: var(--orange); }
+  .box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin: 0.6rem 0;
+  }
+  .box-title { font-weight: 600; color: var(--accent); margin-bottom: 0.3rem; }
+  .rec {
+    border-left: 3px solid var(--green);
+    padding: 0.6rem 0.8rem;
+    margin: 1rem 0;
+    background: rgba(63,185,80,0.06);
+    border-radius: 0 6px 6px 0;
+  }
+  .rec-title { font-weight: 600; color: var(--green); }
+  .warn {
+    border-left: 3px solid var(--orange);
+    padding: 0.6rem 0.8rem;
+    margin: 1rem 0;
+    background: rgba(210,153,34,0.06);
+    border-radius: 0 6px 6px 0;
+  }
+  .warn-title { font-weight: 600; color: var(--orange); }
+  .toc { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; }
+  .toc h3 { margin-top: 0; color: var(--accent2); }
+  .toc a { display: block; padding: 0.15rem 0; }
+  .toc .sub { padding-left: 1.2rem; font-size: 0.9rem; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .footer { color: var(--text-dim); font-size: 0.85rem; text-align: center; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<h1>Hermes Agent × Obsidian Vault</h1>
+<p style="font-size:1.1rem; color:var(--text-dim); margin-bottom:0.5rem;">Research Report: Memory Architecture, Obsidian Integration, and Skill-Based Knowledge Retrieval</p>
+<div class="meta">Research Date: 2026-08-09 | Sources: Official Hermes Docs, Community Patterns, GitHub Issues, Substack, Medium</div>
+
+<div class="toc">
+<h3>Contents</h3>
+<a href="#s1">1. Hermes Memory System Architecture</a>
+<a href="#s1a" class="sub">1.1 Built-in Memory (Hot Tier)</a>
+<a href="#s1b" class="sub">1.2 Session Search (Warm Tier)</a>
+<a href="#s1c" class="sub">1.3 External Memory Providers (Cold Tier)</a>
+<a href="#s1d" class="sub">1.4 Self-Improvement Loop</a>
+<a href="#s2">2. The Observability Problem</a>
+<a href="#s3">3. Obsidian Integration — The Four Layers</a>
+<a href="#s3a" class="sub">3.1 Layer 0: Filesystem-First Obsidian Skill</a>
+<a href="#s3b" class="sub">3.2 Layer 1: Scoped Vault Folder Sync</a>
+<a href="#s3c" class="sub">3.3 Layer 2: MCP Server for Vault Operations</a>
+<a href="#s3d" class="sub">3.4 Layer 3: Vector Store + Nightly Ingestion</a>
+<a href="#s4">4. Skill System &amp; Dynamic Knowledge Retrieval</a>
+<a href="#s4a" class="sub">4.1 How Skills Load</a>
+<a href="#s4b" class="sub">4.2 The Self-Improvement Skill Creation Loop</a>
+<a href="#s4c" class="sub">4.3 Project Context Files</a>
+<a href="#s5">5. Community Patterns &amp; Case Studies</a>
+<a href="#s6">6. Recommended Architecture: The Expedient Path</a>
+<a href="#s7">7. Skill Specification: Vault Knowledge Retrieval</a>
+<a href="#s8">8. Pitfalls &amp; Caveats</a>
+<a href="#s9">9. Sources</a>
+</div>
+
+<h2 id="s1">1. Hermes Memory System Architecture</h2>
+<p>Hermes Agent uses a <strong>tiered memory architecture</strong> with four layers that work together. Understanding these tiers is essential before designing an Obsidian-based memory skill.</p>
+
+<div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                 HERMES MEMORY ARCHITECTURE                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  ┌─────────────────────────────────────────────────────────┐     │
+│  │  <span class="hl">LAYER 1 — BUILT-IN MEMORY (Hot)</span>                       │     │
+│  │  MEMORY.md (2,200 chars) + USER.md (1,375 chars)          │     │
+│  │  Frozen snapshot at session start → injected into prompt  │     │
+│  │  Agent manages via `memory` tool (add/replace/remove)     │     │
+│  └─────────────────────────────────────────────────────────┘     │
+│                               │                                   │
+│  ┌─────────────────────────────────────────────────────────┐     │
+│  │  <span class="hl2">LAYER 2 — SESSION SEARCH (Warm)</span>                     │     │
+│  │  SQLite + FTS5 — all sessions, unlimited, ~20ms queries  │     │
+│  │  `session_search` tool: discovery / scroll / browse      │     │
+│  └─────────────────────────────────────────────────────────┘     │
+│                               │                                   │
+│  ┌─────────────────────────────────────────────────────────┐     │
+│  │  <span class="hl3">LAYER 3 — EXTERNAL MEMORY PROVIDERS (Cold)</span>            │     │
+│  │  8 plugins: Honcho, OpenViking, Mem0, Hindsight,          │     │
+│  │  Holographic, RetainDB, ByteRover, Supermemory, Memori   │     │
+│  │  One active at a time; runs ALONGSIDE built-in memory     │     │
+│  └─────────────────────────────────────────────────────────┘     │
+│                               │                                   │
+│  ┌─────────────────────────────────────────────────────────┐     │
+│  │  <span class="hl4">LAYER 4 — OBSIDIAN / WIKI (Long-Term Archival)</span>          │     │
+│  │  Markdown knowledge base — human-reviewable, git-backed   │     │
+│  │  Accessed via Obsidian skill, file tools, or MCP server   │     │
+│  └─────────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<h3 id="s1a">1.1 Built-in Memory (The Hot Tier)</h3>
+<table>
+  <tr><th>Store</th><th>Purpose</th><th>Char Limit</th><th>Typical Entries</th></tr>
+  <tr><td><code>MEMORY.md</code></td><td>Agent's personal notes — environment facts, conventions, lessons</td><td>2,200</td><td>8–15</td></tr>
+  <tr><td><code>USER.md</code></td><td>User profile — preferences, style, identity</td><td>1,375</td><td>5–10</td></tr>
+</table>
+<p><strong>Key behavior:</strong> Memory is a <strong>frozen snapshot</strong> captured once at session start and injected into the system prompt. Changes during a session persist to disk but don't appear in the prompt until the <em>next</em> session. This preserves LLM prefix caching.</p>
+<p>The <code>memory</code> tool supports: <code>add</code>, <code>replace</code> (substring match via <code>old_text</code>), <code>remove</code> (substring match). When full, the agent reads current entries and consolidates before retrying.</p>
+
+<div class="warn">
+<div class="warn-title">⚠ Capacity Constraint</div>
+Combined ~3,575 chars (~1,300 tokens). This is <strong>not</strong> a knowledge base — it's the agent's working identity. Stable, verbose knowledge belongs in Layers 3 or 4.
+</div>
+
+<h3 id="s1b">1.2 Session Search (The Warm Tier)</h3>
+<p>All CLI and messaging sessions are stored in <code>~/.hermes/state.db</code> with FTS5 full-text search. Three calling shapes:</p>
+<ul>
+  <li><strong>Discovery</strong> — <code>session_search(query="auth refactor")</code> returns top sessions with FTS5-matched snippets + bookend messages (goal + resolution)</li>
+  <li><strong>Scroll</strong> — <code>session_search(session_id="...", around_message_id=N)</code> browses within a session</li>
+  <li><strong>Browse</strong> — <code>session_search()</code> lists recent sessions chronologically</li>
+</ul>
+<p>Zero LLM cost — pure SQLite FTS5. Always available across sessions. <strong>This is free, always-on memory that doesn't count against the memory budget.</strong></p>
+
+<h3 id="s1c">1.3 External Memory Providers (The Cold Tier)</h3>
+<p>Hermes ships with 8 external providers. Only <strong>one</strong> can be active at a time, and it runs <strong>alongside</strong> built-in memory (never replaces it).</p>
+<table>
+  <tr><th>Provider</th><th>Storage</th><th>Cost</th><th>Unique Feature</th></tr>
+  <tr><td>Honcho</td><td>Cloud / Self-hosted</td><td>Paid / Free</td><td>Dialectic user modeling + session-scoped context injection</td></tr>
+  <tr><td>OpenViking</td><td>Self-hosted</td><td>Free</td><td>Filesystem hierarchy + tiered retrieval (ByteDance/Volcengine)</td></tr>
+  <tr><td>Mem0</td><td>Cloud / Self-hosted</td><td>Free / Paid</td><td>Server-side LLM extraction + self-hosted mode</td></tr>
+  <tr><td>Hindsight</td><td>Cloud / Local</td><td>Free / Paid</td><td>Knowledge graph + reflect synthesis</td></tr>
+  <tr><td>Holographic</td><td>Local</td><td>Free</td><td>HRR algebra + trust scoring — zero deps</td></tr>
+  <tr><td>Supermemory</td><td>Cloud / Self-hosted</td><td>Free / Paid</td><td>Context fencing + session graph ingest</td></tr>
+  <tr><td>Memori</td><td>Cloud</td><td>Free / Paid</td><td>Tool-aware memory + structured recall</td></tr>
+</table>
+<p>When active, the provider automatically: injects context into system prompt, prefetches relevant memories before each turn, syncs conversation turns, extracts memories on session end, and mirrors built-in memory writes.</p>
+
+<h3 id="s1d">1.4 Self-Improvement Loop</h3>
+<p>Hermes has a built-in <strong>closed learning loop</strong> that runs in the background:</p>
+<table>
+  <tr><th>Trigger</th><th>Action</th></tr>
+  <tr><td>After 10 user turns</td><td>Memory review agent updates <code>USER.md</code> and <code>MEMORY.md</code></td></tr>
+  <tr><td>After 15 tool iterations</td><td>Skill review agent updates or creates skills</td></tr>
+  <tr><td>Nightly (4 AM on stale sessions)</td><td>Final pass on untouched sessions — captures learnings before context expires</td></tr>
+</table>
+<p>The review agent gets the transcript, reads it, and decides: "anything worth saving?" If so, it writes. If nothing stands out: "Nothing to save." and stops. The main chat never sees this background agent.</p>
+
+<h2 id="s2">2. The Observability Problem</h2>
+
+<p>The central challenge this research addresses: <strong>Hermes' built-in memory is invisible to the user.</strong> You can't open MEMORY.md in a nice UI, graph the connections, or cross-reference it with your own notes. Obsidian fills this gap by providing:</p>
+
+<ul>
+  <li><strong>Visualization</strong> — Graph View shows memory connections via wikilinks</li>
+  <li><strong>Reviewability</strong> — Open any note and edit it directly</li>
+  <li><strong>Durability</strong> — Git backup, iCloud sync, no proprietary format</li>
+  <li><strong>Cross-agent portability</strong> — Claude Code, Codex, and Hermes can all share the same vault</li>
+</ul>
+
+<div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                THE OBSERVABILITY GAP                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  What Hermes sees (injected into prompt every session):          │
+│  ┌──────────────────────────────────────────────────────┐       │
+│  │ MEMORY.md [67% — 1,474/2,200 chars]                  │       │
+│  │ User prefers concise responses                       │       │
+│  │ §                                                     │       │
+│  │ Project uses Python 3.11 + FastAPI                   │       │
+│  └──────────────────────────────────────────────────────┘       │
+│                                                                   │
+│  What the user cannot see (unless they read raw .md files):     │
+│  ┌──────────────────────────────────────────────────────┐       │
+│  │ ✗ No rendered notes with backlinks                    │       │
+│  │ ✗ No graph visualization of memory connections        │       │
+│  │ ✗ No way to edit memory in a rich editor              │       │
+│  │ ✗ No way to add cross-references between memory items │       │
+│  └──────────────────────────────────────────────────────┘       │
+│                                                                   │
+│  Obsidian fills this: vault = reviewable markdown layer          │
+│  Hermes memory = execution context (stays the source of truth)   │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<h2 id="s3">3. Obsidian Integration — The Four Layers</h2>
+
+<p>Based on community patterns, official docs, and GitHub discussions, there are <strong>four approaches</strong> to integrate an Obsidian vault with Hermes, each with different complexity/power trade-offs:</p>
+
+<h3 id="s3a">3.1 Layer 0: Filesystem-First Obsidian Skill (Built-in)</h3>
+<p><strong>What it is:</strong> The bundled <code>obsidian</code> skill reads/writes Markdown files in the vault directory via standard file tools (<code>read_file</code>, <code>write_file</code>, <code>search_files</code>, <code>patch</code>). No app required — Hermes works headlessly.</p>
+
+<div class="box">
+<div class="box-title">Configuration</div>
+<pre># In ~/.hermes/.env:
+OBSIDIAN_VAULT_PATH="G:\My Drive\Vault\MindEmporium"
+</pre>
+</div>
+
+<p><strong>Capabilities:</strong></p>
+<ul>
+  <li>Read any note via <code>read_file</code></li>
+  <li>Search notes via <code>search_files</code> (content regex or filename glob)</li>
+  <li>Create/append/edit notes via <code>write_file</code> / <code>patch</code></li>
+  <li>Create wikilinked notes: <code>[[Note Name]]</code> syntax</li>
+</ul>
+
+<p><strong>Limitations:</strong> No semantic search, no RAG — pure regex/filename matching. For small-to-medium vaults this is often sufficient because the agent can reason about what to search for.</p>
+
+<h3 id="s3b">3.2 Layer 1: Scoped Vault Folder Sync (Recommended Starting Pattern)</h3>
+<p><strong>What it is:</strong> Create a dedicated subfolder in your vault (e.g., <code>/Agent Memory</code> or <code>/Hermes</code>) that Hermes reads/writes. This keeps agent-generated content separate from your personal notes.</p>
+
+<p><strong>Official recommendation from hermes-agent.ai:</strong></p>
+<ul>
+  <li>Start with a scoped <code>/Hermes</code> or <code>/Agent Memory</code> folder</li>
+  <li>Decide what Hermes may write first: durable project facts, session summaries, skills, daily notes</li>
+  <li>Keep credentials, client secrets, and private journals outside the scoped folder</li>
+  <li>Run one smoke test: ask Hermes to save a durable fact, then verify it appears in Obsidian</li>
+  <li>Review first generated notes before expanding access</li>
+</ul>
+
+<div class="rec">
+<div class="rec-title">✅ Key Insight — Symlinking for Review</div>
+Obsidian users can <strong>symlink their memory and skill files</strong> into the vault to see and review what the self-improvement loop is writing. This gives you Obsidian's graph view and editing capabilities over Hermes' own runtime files without moving them out of <code>~/.hermes/memories/</code>.
+</div>
+
+<h3 id="s3c">3.3 Layer 2: MCP Server for Vault Operations (Most Powerful Seam)</h3>
+<p><strong>What it is:</strong> Expose vault operations (search, read, save, daily notes, world summaries) as an <strong>MCP (Model Context Protocol) server</strong>. Hermes connects via <code>discover_mcp_tools()</code>. <strong>Zero Hermes-specific code</strong> — the same MCP server works in Claude Code, Claude Desktop, Cursor, etc.</p>
+
+<p>This approach was <strong>the recommended solution</strong> in the obsidian-second-brain GitHub issue #60 by the project maintainer:</p>
+
+<div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                   MCP-BASED VAULT ACCESS                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  Hermes Agent ──→ discover_mcp_tools() ──→ MCP Server            │
+│                                                    │             │
+│  Tools exposed:                                    │             │
+│  • obsidian_search(query)       ← searches vault   │             │
+│  • obsidian_read_note(path)     ← reads a note     │             │
+│  • obsidian_save_note(path,content) ← writes note  │             │
+│                                                    │             │
+│  Same server also works in:                        │             │
+│  Claude Code │ Claude Desktop │ Cursor              │             │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<p><strong>Setup (from obsidian-second-brain repo, <code>obsidian-mcp-server</code> branch):</strong></p>
+<pre>git clone https://github.com/eugeniughelbur/obsidian-second-brain
+cd obsidian-second-brain
+git checkout obsidian-mcp-server
+export OBSIDIAN_VAULT_PATH="G:\My Drive\Vault\MindEmporium"
+
+# Test (no Hermes needed):
+uv run --with mcp python integrations/obsidian-mcp-server/live_test.py "some query"
+
+# Then configure Hermes MCP to point at:
+# Command: uv run --with mcp python /abs/path/integrations/obsidian-mcp-server/server.py
+# Environment: OBSIDIAN_VAULT_PATH=...
+</pre>
+
+<h3 id="s3d">3.3 Layer 3: Vector Store + Nightly Ingestion (Advanced)</h3>
+<p><strong>What it is:</strong> Mart Kempenaar's iCloud-native setup. A Weaviate vector store is populated nightly by a Hermes-managed cron job that ingests new/modified/deleted notes. This enables <strong>semantic similarity search</strong> across a large vault.</p>
+
+<pre># Nightly cron workflow (Hermes-managed):
+1. Cron fires at 2 AM
+2. Script scans vault for new/modified/deleted notes (git diff)
+3. Content + metadata (creation date, vault, folder, tags) → Weaviate
+4. Hybrid search: meaning-based similarity + concrete filters (folder/tag)
+5. Recent notes get a boost factor
+6. LLM distills important changes → long-term memory entries in vault
+</pre>
+
+<p><strong>Trade-off:</strong> Highest power but requires running a vector DB instance. Overkill unless the vault is very large (500+ notes) or semantic search is critical.</p>
+
+<h2 id="s4">4. Skill System &amp; Dynamic Knowledge Retrieval</h2>
+
+<h3 id="s4a">4.1 How Skills Load</h3>
+<p>Skills are the agent's <strong>procedural memory</strong>. At session start:</p>
+<ol>
+  <li>All active skill <strong>descriptions</strong> (first ~57 chars) are injected into the system prompt as the available skill index</li>
+  <li>When a skill matches the task, the agent calls <code>skill_view(name)</code> to load the full SKILL.md content + linked files</li>
+  <li>The skill body contains instructions, commands, and workflows the agent follows</li>
+  <li><strong>Skills are cached</strong> — repeated <code>skill_view()</code> calls on the same skill return instantly</li>
+</ol>
+
+<div class="warn">
+<div class="warn-title">⚠ Key Constraint</div>
+Having too many active skills simultaneously loads all their descriptions into context, which can confuse the model. Keep only the skills you actively use. The agent <strong>does not automatically discover</strong> which skill to load — the description must be clear and unique enough for the model to choose it.
+</div>
+
+<h3 id="s4b">4.2 The Self-Improvement Skill Creation Loop</h3>
+<p>Hermes creates skills automatically when:</p>
+<ul>
+  <li>A complex task is completed successfully (5+ tool calls)</li>
+  <li>An error is hit and recovered from</li>
+  <li>A user correction reveals a better approach</li>
+  <li>A non-trivial workflow is discovered</li>
+</ul>
+<p>Skills <strong>are also cached and managed</strong> — the Curator (background maintenance system) tracks usage via <code>~/.hermes/skills/.usage.json</code> (use_count, view_count, patch_count, last_activity_at, state, pinned). Stale skills are auto-archived.</p>
+
+<h3 id="s4c">4.3 Project Context Files</h3>
+<p>These files provide <strong>project-level instructions</strong> auto-injected into the system prompt based on working directory:</p>
+<table>
+  <tr><th>File</th><th>Scope</th><th>Use Case</th></tr>
+  <tr><td><code>.hermes.md</code></td><td>Root + subtree (walks to git root)</td><td>Hermes-specific rules that inherit from parent dirs</td></tr>
+  <tr><td><code>AGENTS.md</code></td><td>Cwd only</td><td>Portable agent instructions (Hermes, Claude Code, Codex)</td></tr>
+  <tr><td><code>SOUL.md</code></td><td><code>$HERMES_HOME</code> (always loaded)</td><td>Agent identity — not project rules</td></tr>
+</table>
+<p><strong>For vault-backed memory:</strong> Placing an <code>AGENTS.md</code> in the vault root with directives like "always search my vault before answering" can encode the desired retrieval behavior without a custom skill.</p>
+
+<h2 id="s5">5. Community Patterns &amp; Case Studies</h2>
+
+<h3>Case Study 1: Artem Zhutov — Self-Learning User Profile</h3>
+<p>Artem ran Hermes across Discord channels and observed it:</p>
+<ul>
+  <li>Wrote 7 entries into USER.md entirely on its own (without being asked)</li>
+  <li>Auto-created a skill after a YouTube → NotebookLM research workflow</li>
+  <li>Created an <code>obsidian-evening-routine-capture</code> skill from a nightly review pattern</li>
+  <li>Uses Discord channel-specific skills per area (coding, content, vault interaction)</li>
+</ul>
+<p><strong>Key takeaway:</strong> The self-improvement loop works. The agent learns from you even when you don't explicitly teach it.</p>
+
+<h3>Case Study 2: Mart Kempenaar — iCloud-Native Agent</h3>
+<p>Mac mini running Hermes 24/7 with:</p>
+<ul>
+  <li>iCloud synced Obsidian vault (keep-downloaded flag to prevent macOS eviction)</li>
+  <li>Weaviate vector store for semantic search over multi-vault knowledge</li>
+  <li>Nightly cron: git diff → LLM distillation → long-term memory in vault</li>
+  <li>Calendar + Reminders integration via <code>ical-guy</code></li>
+  <li>Morning brief with relevant project notes pre-fetched</li>
+  <li>PII redaction in the LLM pipeline before passing any data</li>
+</ul>
+<p><strong>Key takeaway:</strong> Full automation requires running Hermes on a persistent machine (Mac mini, server). The nightly "dreaming" cycle (distilling activity into long-term memory) is a powerful pattern.</p>
+
+<h3>Case Study 3: savez + eugeniughelbur — MCP Vault Server</h3>
+<p>GitHub issue #60 on obsidian-second-brain repo. The maintainer built an MCP server exposing vault operations as tools. Clear boundary established:</p>
+<ul>
+  <li><strong>Hermes agent memory</strong> (how it behaves, tricks it learns) → left untouched</li>
+  <li><strong>Obsidian as second brain</strong> (what you read, ideas across MD files) → MCP tools</li>
+  <li>The two stay distinct — the agent uses MCP to query/add to knowledge, not to overwrite its own behavior memory</li>
+</ul>
+<p><strong>Key takeaway:</strong> The MCP approach is architecturally cleanest — same server works across all MCP-compatible agents. Build once, use everywhere.</p>
+
+<h2 id="s6">6. Recommended Architecture: The Expedient Path</h2>
+
+<p>Based on this research, the most expedient path to use an Obsidian vault as Hermes' memory/knowledge store involves <strong>three tiers working together</strong>, starting simple and scaling as needed:</p>
+
+<div class="arch-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│          RECOMMENDED HYBRID ARCHITECTURE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  <span class="hl">PHASE 1 (Day 1):</span>                                            │
+│  ┌─────┐    ┌───────────────────┐    ┌──────────────────────┐   │
+│  │Hermes│───→│ Obsidian Skill    │───→│ Vault as Readable     │   │
+│  │Agent │    │ (filesystem ops)  │    │ Knowledge Base        │   │
+│  └─────┘    │ search_files()    │    │ (graph view, edit)    │   │
+│             │ read_file()       │    └──────────────────────┘   │
+│             │ write_file()      │                                │
+│             └───────────────────┘                                │
+│                                                                   │
+│  <span class="hl2">PHASE 2 (Week 1):</span>                                            │
+│  ┌─────┐    ┌───────────────────┐    ┌──────────────────────┐   │
+│  │Hermes│───→│ Vault Knowledge   │───→│ vault/AGENTS.md      │   │
+│  │Agent │    │ Retrieval Skill   │    │ Vault schema rules   │   │
+│  └─────┘    │ (custom skill)    │    │ Directory structure   │   │
+│             └───────────────────┘    └──────────────────────┘   │
+│                                                                   │
+│  <span class="hl3">PHASE 3 (As Needed):</span>                                         │
+│  ┌─────┐    ┌───────────────────┐    ┌──────────────────────┐   │
+│  │Hermes│───→│ MCP Vault Server  │───→│ Semantic Search      │   │
+│  │Agent │    │ (obsidian_search) │    │ Cross-agent port.    │   │
+│  └─────┘    │ (obsidian_read)   │    │ Claude Code compat.  │   │
+│             │ (obsidian_save)   │    └──────────────────────┘   │
+│             └───────────────────┘                                │
+│                                                                   │
+│  <span class="hl4">PHASE 4 (Optional):</span>                                            │
+│  ┌─────┐    ┌───────────────────┐    ┌──────────────────────┐   │
+│  │Hermes│───→│ Nightly Cron      │───→│ Vector Store         │   │
+│  │Agent │    │ Vault → Weaviate  │    │ Semantic similarity  │   │
+│  └─────┘    │ LLM Distillation  │    │ Hybrid search        │   │
+│             └───────────────────┘    └──────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<div class="rec">
+<div class="rec-title">⏱ Most Expedient First Step (Under 15 minutes)</div>
+<ol>
+  <li>Set <code>OBSIDIAN_VAULT_PATH</code> in <code>~/.hermes/.env</code> to your MindEmporium vault path</li>
+  <li>Create a scoped subfolder: <code>G:\My Drive\Vault\MindEmporium\Agent Memory\</code></li>
+  <li>Create <code>G:\My Drive\Vault\MindEmporium\AGENTS.md</code> with vault search directives</li>
+  <li>Ask Hermes to save one fact to a note in the vault, verify it appears</li>
+  <li>Symlink <code>~/.hermes/memories/MEMORY.md</code> and <code>USER.md</code> into the vault for review</li>
+</ol>
+</div>
+
+<h2 id="s7">7. Skill Specification: Vault Knowledge Retrieval</h2>
+
+<p>Here is the recommended structure for a custom skill that ensures Hermes pulls the most relevant skill data, user preferences, and session data from the Obsidian vault on every session start:</p>
+
+<pre>---
+name: vault-knowledge-retrieval
+description: "Use when answering questions or starting work: search the Obsidian vault for relevant context before responding. Always load this skill at session start if OBSIDIAN_VAULT_PATH is set."
+version: 1.0.0
+platforms: [windows, linux, macos]
+---
+
+# Vault Knowledge Retrieval
+
+## When This Skill Activates
+
+- **Auto-activate:** At the START of every session when OBSIDIAN_VAULT_PATH is configured
+- **On user query:** When the user asks a question that might reference prior work, project notes, or personal knowledge
+- **On task start:** Before beginning any complex or project-related task
+
+## Vault Location
+
+Resolved from `OBSIDIAN_VAULT_PATH` env var (set in `~/.hermes/.env`).
+
+## Session-Start Protocol (RUN THIS EVERY SESSION)
+
+### Step 1: Orient in the vault
+
+Read the vault index / MOC (Map of Content) first:
+
+```python
+from hermes_tools import search_files, read_file
+
+vault = os.environ.get("OBSIDIAN_VAULT_PATH", "")
+if not vault:
+    return  # No vault configured — skip
+
+# Check for AGENTS.md directives
+agents = os.path.join(vault, "AGENTS.md")
+if os.path.exists(agents):
+    read_file(agents)  # Load project context rules
+
+# Read MOC if it exists
+moc_paths = search_files(pattern="MOC.md OR Index.md", target="files", path=vault)
+for p in moc_paths["matches"][:1]:
+    read_file(p["path"])  # Understand vault structure
+```
+
+### Step 2: Search for relevant context
+
+Before answering a question or starting a task:
+
+1. Extract key terms from the user's query
+2. Search the vault for those terms:
+   ```
+   search_files(pattern="<key terms>", path="$OBSIDIAN_VAULT_PATH", file_glob="*.md", target="content", limit=10)
+   ```
+3. Read the top 2-3 most relevant matching notes
+4. Synthesize findings into the response, citing specific note paths
+
+### Step 3: Check for related session history
+
+```
+session_search(query="<key terms from query>", limit=3, sort="newest")
+```
+
+This catches relevant prior discussions even if they aren't yet reflected in the vault.
+
+## Write Protocol
+
+When storing new information to the vault:
+
+1. Place notes in the appropriate subfolder (Projects, Areas, Resources)
+2. Use `[[wikilinks]]` to cross-reference related notes
+3. Prefix agent-written notes with metadata block:
+   ```
+   **Source:** Hermes Agent
+   **Date:** YYYY-MM-DD
+   **Session:** @session:<profile>/<id>
+   ```
+4. Update the MOC or index if creating a new major topic note
+
+## Folder Conventions
+
+```
+Agent Memory/
+├── index.md           # Agent's MOC — updated on every write
+├── session-summaries/ # One note per significant session
+├── project-facts/     # Durable project config, conventions, blockers
+└── learned-skills/    # Skill documentation vault copy (review surface)
+```
+
+## Performance Notes
+
+- `search_files` (ripgrep-backed) is ~50ms per query — fast enough for interactive use
+- Session search (FTS5) is ~20ms per query — effectively free
+- Only load full note content with `read_file` when the search snippet is relevant
+- For very large vaults (500+ notes), consider the MCP server approach with semantic search
+</pre>
+
+<h2 id="s8">8. Pitfalls &amp; Caveats</h2>
+
+<div class="warn">
+<div class="warn-title">⚠ Don't Replace Hermes Memory With Obsidian</div>
+<p>Hermes' built-in memory (MEMORY.md/USER.md) handles the agent's <strong>behavioral identity</strong> — preferences, corrections, environment facts. Obsidian holds <strong>long-form knowledge</strong> — research notes, project docs, reference material. They serve different purposes. Hermes needs both.</p>
+</div>
+
+<div class="warn">
+<div class="warn-title">⚠ Security — Vault Scope</div>
+<p>Do <strong>not</strong> give Hermes full vault access on day one. Start with a scoped <code>/Agent Memory</code> folder. Your vault likely contains credentials, client data, personal journals, and API keys. The vault is accessed via file tools — Hermes can read anything in the exposed path.</p>
+</div>
+
+<div class="warn">
+<div class="warn-title">⚠ Skill Overload</div>
+<p>Having too many active skills loads all descriptions into the system prompt. The model can get confused about which skill applies (e.g., activating PowerPoint instead of Obsidian for a note-taking task). Keep <strong>only the skills you actively use</strong> and give them clear, non-overlapping descriptions.</p>
+</div>
+
+<div class="warn">
+<div class="warn-title">⚠ Cross-Profile Memory Isolation</div>
+<p>Don't point two Hermes profiles at the same memory directory. Memory writes are automatic — two writers sharing one home will compound entries into state neither agent authored. Use external memory providers (Honcho, etc.) for shared context across profiles.</p>
+</div>
+
+<div class="warn">
+<div class="warn-title">⚠ Frozen Snapshot Pattern</div>
+<p>Memory changes during a session are persisted to disk immediately but don't appear in the system prompt until the next session. If you correct something in the vault mid-session, the agent won't see it until the next session start. This is by design — it preserves prompt caching.</p>
+</div>
+
+<div class="warn">
+<div class="warn-title">⚠ The MCP Path Isn't Fully Baked</div>
+<p>The obsidian-second-brain MCP server is on a feature branch and has been tested with a standalone MCP client but <strong>not yet driven by Hermes itself</strong>. The architecture is sound (MCP is Hermes-native), but you'll be on the bleeding edge if you go this route.</p>
+</div>
+
+<h2 id="s9">9. Sources</h2>
+
+<ol style="font-size:0.9rem;">
+  <li><strong>Hermes Agent Official Docs — Memory System:</strong> <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/memory">https://hermes-agent.nousresearch.com/docs/user-guide/features/memory</a></li>
+  <li><strong>Hermes Agent Official Docs — Memory Providers:</strong> <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/memory-providers">https://hermes-agent.nousresearch.com/docs/user-guide/features/memory-providers</a></li>
+  <li><strong>Hermes Agent Official Docs — Skills System:</strong> <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/skills">https://hermes-agent.nousresearch.com/docs/user-guide/features/skills</a></li>
+  <li><strong>Hermes Agent Official Docs — Project Context Files:</strong> <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/project-context-files">https://hermes-agent.nousresearch.com/docs/user-guide/features/project-context-files</a></li>
+  <li><strong>Hermes Agent Official Docs — Obsidian Skill:</strong> <a href="https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/note-taking/note-taking-obsidian">https://hermes-agent.nousresearch.com/docs/user-guide/skills/bundled/note-taking/note-taking-obsidian</a></li>
+  <li><strong>Hermes Agent Obsidian Integration (hermes-agent.ai):</strong> <a href="https://hermes-agent.ai/tools/hermes-obsidian-plugin">https://hermes-agent.ai/tools/hermes-obsidian-plugin</a></li>
+  <li><strong>Artem Zhutov — "I Stopped Teaching My Agent Who I Am":</strong> <a href="https://artemxtech.substack.com/p/i-stopped-teaching-my-agent-who-i">https://artemxtech.substack.com/p/i-stopped-teaching-my-agent-who-i</a></li>
+  <li><strong>Mart Kempenaar — iCloud-Native Hermes Agent:</strong> <a href="https://medium.com/@martk/how-i-built-an-icloud-native-ai-agent-with-hermes-and-obsidian-12ac173f29b9">https://medium.com/@martk/...</a></li>
+  <li><strong>GitHub Issue #60 — obsidian-second-brain × Hermes:</strong> <a href="https://github.com/eugeniughelbur/obsidian-second-brain/issues/60">https://github.com/eugeniughelbur/obsidian-second-brain/issues/60</a></li>
+  <li><strong>Reddit: How I Use Obsidian as Long-Term Memory:</strong> <a href="https://www.reddit.com/r/hermesagent/comments/1stz6gd/how_i_use_obsidian_as_the_longterm_memory/">https://reddit.com/r/hermesagent/...</a></li>
+</ol>
+
+<div class="footer">
+Research conducted by Hermes Agent (Hermosa Vex) — 2026-08-09<br>
+Sources cited above; community patterns verified against official Hermes Agent v3 documentation.<br>
+This is a research report only — no configuration or system changes were executed in producing it.
+</div>
+
+</body>
+</html>
