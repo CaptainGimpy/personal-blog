@@ -1,28 +1,29 @@
-/* 16‑bit meets Cyberpunk — Theme for CaptainGimpy's Blog */
+/* CP2077 — Theme for CaptainGimpy's Blog */
+/* Color palette inspired by CD Projekt Red's Cyberpunk 2077 */
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap');
 
 :root {
-    /* Cyberpunk neon palette */
-    --bg-dark: #0a0a0f;
-    --bg-panel: #11111a;
-    --bg-panel2: #1a1a24;
-    --border: #2a2a3a;
-    --border-glow: #00ffff;
-    --border-glow-secondary: #ff00ff;
+    /* CP2077 core palette */
+    --bg-dark: #0A0A0A;
+    --bg-panel: #1A1A1A;
+    --bg-panel2: #242424;
+    --border: #333333;
+    --border-glow: #FFE500;
+    --border-glow-secondary: #FF0055;
     
-    --text-primary: #e0e0ff;
-    --text-secondary: #a0a0c0;
-    --text-muted: #606080;
+    --text-primary: #F0F0F0;
+    --text-secondary: #A0A0A0;
+    --text-muted: #606060;
     
-    --neon-cyan: #00ffff;
-    --neon-magenta: #ff00ff;
-    --neon-green: #00ff00;
-    --neon-yellow: #ffff00;
-    --neon-red: #ff0055;
+    --neon-yellow: #FFE500;
+    --neon-cyan: #00E5FF;
+    --neon-magenta: #FF0055;
+    --neon-green: #00FF66;
+    --neon-red: #FF0044;
     
     --pixel-size: 2px;
-    --scanline-opacity: 0.03;
+    --scanline-opacity: 0.025;
     
     --font-pixel: 'Press Start 2P', monospace;
     --font-mono: 'JetBrains Mono', monospace;
@@ -52,7 +53,7 @@ body {
     margin: 0 auto;
 }
 
-/* Scanline overlay */
+/* HUD scanline overlay — CP2077 hacking view */
 body::before {
     content: '';
     position: fixed;
@@ -63,7 +64,7 @@ body::before {
     background: linear-gradient(
         to bottom,
         transparent 50%,
-        rgba(0, 255, 255, var(--scanline-opacity)) 50%
+        rgba(0, 229, 255, var(--scanline-opacity)) 50%
     );
     background-size: 100% 4px;
     pointer-events: none;
@@ -100,8 +101,8 @@ header {
 h1 {
     font-family: var(--font-pixel);
     font-size: 2.5rem;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 10px var(--neon-cyan);
+    color: var(--neon-yellow);
+    text-shadow: 0 0 10px var(--neon-yellow);
     letter-spacing: 0.05em;
     margin-bottom: 1rem;
 }
@@ -111,6 +112,36 @@ h1 {
     color: var(--text-secondary);
     font-size: 1.1rem;
     margin-bottom: 2rem;
+}
+
+/* Introduction section with portrait */
+.intro-with-portrait {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+.intro-with-portrait .portrait {
+    flex-shrink: 0;
+}
+.intro-with-portrait .portrait img {
+    width: 180px;
+    height: auto;
+    border-radius: 10px;
+    border: 2px solid var(--neon-yellow);
+    box-shadow: 0 0 16px rgba(255, 229, 0, 0.35), 0 0 32px rgba(255, 229, 0, 0.1);
+    image-rendering: pixelated;
+}
+.intro-with-portrait .intro-text {
+    flex: 1;
+}
+.intro-with-portrait .intro-text h2 {
+    margin-top: 0;
+}
+@media (max-width: 640px) {
+    .intro-with-portrait {
+        flex-direction: column;
+        align-items: center;
+    }
 }
 
 /* Navigation */
@@ -123,7 +154,7 @@ nav {
 
 nav a {
     font-family: var(--font-pixel);
-    color: var(--neon-magenta);
+    color: var(--neon-yellow);
     text-decoration: none;
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
@@ -131,13 +162,22 @@ nav a {
     transition: all 0.2s;
 }
 nav a:hover {
-    border-color: var(--neon-magenta);
-    box-shadow: 0 0 10px var(--neon-magenta);
+    border-color: var(--neon-yellow);
+    box-shadow: 0 0 10px var(--neon-yellow);
+    color: #FFF;
 }
 
 /* Main content */
 main {
     padding: 2rem 1rem;
+}
+
+/* Section intro */
+#intro h2 {
+    font-family: var(--font-pixel);
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px var(--neon-cyan);
+    margin-bottom: 1rem;
 }
 
 /* Articles grid */
@@ -169,13 +209,13 @@ main {
     border-radius: 0;
 }
 .tag-btn:hover {
-    border-color: var(--neon-magenta);
-    color: var(--neon-magenta);
-}
-.tag-btn.active {
     border-color: var(--neon-cyan);
     color: var(--neon-cyan);
-    box-shadow: 0 0 10px var(--neon-cyan);
+}
+.tag-btn.active {
+    border-color: var(--neon-yellow);
+    color: var(--neon-yellow);
+    box-shadow: 0 0 10px var(--neon-yellow);
 }
 
 .article-card {
@@ -191,9 +231,9 @@ main {
     transform: translateY(-4px);
 }
 
-.article-card h2 {
+.article-card h2, .article-card h3 {
     font-family: var(--font-pixel);
-    color: var(--neon-green);
+    color: var(--neon-yellow);
     font-size: 1.2rem;
     margin-bottom: 0.5rem;
 }
@@ -215,14 +255,14 @@ main {
 .article-link {
     display: inline-block;
     font-family: var(--font-pixel);
-    color: var(--neon-yellow);
+    color: var(--neon-cyan);
     text-decoration: none;
     font-size: 0.8rem;
     padding: 0.5rem 1rem;
-    border: 2px solid var(--neon-yellow);
+    border: 2px solid var(--neon-cyan);
 }
 .article-link:hover {
-    background: var(--neon-yellow);
+    background: var(--neon-cyan);
     color: var(--bg-dark);
 }
 
@@ -237,7 +277,20 @@ footer {
 }
 
 footer a {
-    color: var(--neon-cyan);
+    color: var(--neon-yellow);
+}
+
+/* Section headings */
+section h2 {
+    font-family: var(--font-pixel);
+    color: var(--neon-yellow);
+    margin-bottom: 1.5rem;
+}
+
+/* About page paragraph styling */
+section p {
+    margin-bottom: 1rem;
+    line-height: 1.8;
 }
 
 /* Responsive */
