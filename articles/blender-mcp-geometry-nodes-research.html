@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blender MCP Geometry Nodes Research — CaptainGimpy</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>ud83cudfae</text></svg>">
+</head>
+<body>
+    <header>
+        <h1>CaptainGimpy</h1>
+        <p class="tagline">CP2077 aesthetic — experiments, research, musings</p>
+        <nav>
+            <a href="../index.html">Home</a>
+            <a href="../about.html">About</a>
+            <a href="https://github.com/CaptainGimpy" target="_blank">GitHub</a>
+        </nav>
+    </header>
+    <main>
+        <article>
+            <h2>Blender MCP Geometry Nodes Research</h2>
+            <p>|---------|
+| <code>create_node_group</code> | Create empty Geometry node group |
+| <code>ensure_geometry_nodes_modifier</code> | Attach modifier to mesh host |
+| <code>list_geometry_node_trees</code> | List existing trees, revisions, users |
+| <code>get_geometry_node_tree_index</code> | Search/page compact node names/types |
+| <code>export_geometry_node_tree</code> | Export full graph or N-hop subgraph |
+| <code>get_geometry_node_type_schema</code> | <strong>Probe sockets and RNA in running Blender version</strong> |
+| <code>search_geometry_node_types</code> | Search node types available in current Blender |
+| <code>search_blender_node_assets</code> | Inspect bundled node assets |
+| <code>import_blender_node_asset</code> | Import a node asset |
+| <code>validate_geometry_node_patch</code> | <strong>Structural validation + disposable dry-run</strong> |
+| <code>apply_geometry_node_patch</code> | <strong>Transactional apply with rollback and diff</strong> |</p>
+<h4>Patch Operations:</h4>
+<ul>
+<li><code>add_node</code>, <code>remove_node</code>, <code>rename_node</code></li>
+<li><code>set_node_property</code>, <code>set_socket_default</code></li>
+<li><code>set_socket_hide</code></li>
+<li><code>add_link</code>, <code>remove_link</code></li>
+<li><code>set_node_layout</code></li>
+<li><code>add_interface_panel</code>, <code>add_interface_socket</code>, <code>remove_interface_socket</code></li>
+<li><code>set_modifier_input</code></li>
+</ul>
+<h4>Revision System:</h4>
+<ul>
+<li>Every tree has a <code>revision</code> hash (semantic + layout)</li>
+<li>Validation rejects stale base revisions</li>
+<li>Dry-run applies to disposable copy, reports candidate revision</li>
+<li>Application uses verified copy, creates backup, reports actual diff</li>
+<li>Original tree retained as fake-user backup named from revision</li>
+</ul>
+<h4>Compatibility:</h4>
+<ul>
+<li>Blender 5.1.2: Full acceptance pass</li>
+<li>Blender 5.2 LTS RC: Full acceptance pass</li>
+<li>Blender 4.2 LTS: Intended boundary, not locally verified</li>
+<li>Blender 3.x: Not supported</li>
+</ul>
+<h4>Workflow:</h4>
+<ol>
+<li>Create group or select existing</li>
+<li>Get index / search available node types</li>
+<li>Export current tree (semantic or operations view)</li>
+<li>Create patch file using file-edit tools</li>
+<li>Validate with dry-run</li>
+<li>Apply transactionally</li>
+<li>Check diff, re-export next iteration</li>
+</ol>
+<p><strong>Schemas available at:</strong>
+- https://github.com/newo-ether/blender-mcp/blob/main/schemas/geometry-nodes-v1.json
+- https://github.com/newo-ether/blender-mcp/blob/main/schemas/geometry-nodes-patch-v1.json</p>
+<h3>2. ZachHandley/blender-mcp-enhanced</h3>
+<p><strong>Tool:</strong> <code>complete_geometry_node</code>
+<strong>Source:</strong> https://glama.ai/mcp/servers/ZachHandley/blender-mcp-enhanced/tools/complete_geometry_node</p>
+<p>Takes structured JSON definitions of nodes, links, and inputs. Example:</p>
+<div class="codehilite"><pre><span></span><code><span class="kc">n</span><span class="err">odes</span><span class="w"> </span><span class="err">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NodeGroupInput&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;location&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">]},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GeometryNodeMeshCube&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;location&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">200</span><span class="p">,</span><span class="w"> </span><span class="mi">200</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;inputs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;Size&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">]}},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GeometryNodeJoinGeometry&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;location&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">400</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">]},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NodeGroupOutput&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;location&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">600</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">]}</span>
+<span class="p">]</span>
+<span class="err">li</span><span class="kc">n</span><span class="err">ks</span><span class="w"> </span><span class="err">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;from_node&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;from_socket&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Mesh&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;to_node&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;to_socket&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+
+<h2>Key Insight for Prompt Design</h2>
+<p>The newo-ether fork's recommended workflow is THE blueprint for prompting local models:</p>
+<ol>
+<li>
+<p><strong>Start with discovery</strong> — <code>search_geometry_node_types</code> or <code>get_geometry_node_type_schema</code> first. This is version-aware and tells the model exactly what nodes/sockets exist in the running Blender. No guessing from training cutoff data.</p>
+</li>
+<li>
+<p><strong>Export first, edit second</strong> — Always export the current tree before patching. This gives the model context about what already exists.</p>
+</li>
+<li>
+<p><strong>Patch in small transactions</strong> — Each patch is a focused change (add node, link two sockets, set a value). Not a full tree rewrite.</p>
+</li>
+<li>
+<p><strong>Validate before applying</strong> — The dry-run catches structural errors before they touch the real scene.</p>
+</li>
+<li>
+<p><strong>Read the diff</strong> — The apply response returns the actual diff, so the model can verify its change landed correctly.</p>
+</li>
+</ol>
+<h2>Prompting Strategy for Local Models</h2>
+<p>Rather than: <em>"Create a procedural building generator"</em></p>
+<p>Try: 
+- <em>"Search for available mesh primitive nodes and list their socket schemas"</em>
+- <em>"Based on the schemas, create a node group with a Cube → Subdivision Surface → Set Position chain"</em>
+- <em>"Now patch in a Noise Texture driving the offset on the Set Position node"</em></p>
+<p>This breaks the problem into schema-constrained steps that small models handle well.</p>
+<h2>Community Context</h2>
+<ul>
+<li>MindStudio's Blender MCP evaluation confirms: "Node-based workflows — Geometry Nodes, complex material networks, compositor setups — are difficult" for Claude, let alone local models</li>
+<li>Reddit consensus: "I haven't been able to get results beyond a simple..." from users testing local models with Blender MCP</li>
+<li>But these tests all use the freeform bpy approach, not the structured patch workflow</li>
+<li>No public tests exist using the newo-ether fork's structured approach with any model size</li>
+</ul>
+        </article>
+    </main>
+    <footer>
+        <p>Built with plain HTML/CSS/JS • Hosted on GitHub Pages • No cookies, no analytics</p>
+        <p>© 2026 CaptainGimpy — All articles public domain unless noted</p>
+    </footer>
+</body>
+</html>
