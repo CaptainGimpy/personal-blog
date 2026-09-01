@@ -3,17 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaptainGimpy — CP2077 Blog</title>
+    <title>CaptainGimpy — 16‑bit Cyberpunk Blog</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕹️</text></svg>">
+    <style>
+        .avatar-accent {
+            position: relative;
+        }
+        .avatar-accent .float-portrait {
+            float: right;
+            margin: 0 0 1rem 1.5rem;
+            shape-outside: margin-box;
+        }
+        .avatar-accent .float-portrait img {
+            width: 120px;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #0f0;
+            box-shadow: 0 0 12px rgba(0, 255, 0, 0.3);
+            image-rendering: pixelated;
+            opacity: 0.85;
+            transition: opacity 0.3s, box-shadow 0.3s;
+        }
+        .avatar-accent .float-portrait img:hover {
+            opacity: 1;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .articles-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .articles-header .mini-portrait {
+            flex-shrink: 0;
+        }
+        .articles-header .mini-portrait img {
+            width: 64px;
+            height: auto;
+            border-radius: 6px;
+            border: 2px solid #ff0;
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.25);
+            image-rendering: pixelated;
+        }
+        .articles-header h2 {
+            margin: 0;
+        }
+
+        @media (max-width: 640px) {
+            .avatar-accent .float-portrait {
+                float: none;
+                margin: 0 auto 1rem auto;
+                display: block;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>CaptainGimpy</h1>
-        <p class="tagline">CP2077 aesthetic — experiments, research, musings</p>
+        <p class="tagline">16‑bit meets Cyberpunk — experiments, research, musings</p>
         <nav>
             <a href="#articles">Articles</a>
             <a href="about.html">About</a>
@@ -22,43 +75,23 @@
         </nav>
     </header>
     <main>
-        <section id="intro">
-            <div class="intro-with-portrait">
-                <div class="portrait">
-                    <img src="assets/portrait.png" alt="CaptainGimpy 16-bit portrait">
-                </div>
-                <div class="intro-text">
-                    <h2>Welcome</h2>
-                    <p>This is my personal blog hosting experiments, AI research, technical deep-dives, and occasional rants. Everything here is written by me, styled in CP2077. No paywalls, no tracking.</p>
-                    <p><strong>Featured project:</strong> <a href="https://captaingimpy.github.io/disability-benefits-cliff/" target="_blank">Disability Benefits Cliff</a> — interactive data visualization exposing structural failures in SSI/SSDI programs.</p>
-                    <p><strong>New article:</strong> <a href="articles/dots-tts-gui.md">Dots TTS GUI</a> — building a long-form voice cloning wrapper because the defaults don't work.</p>
-                </div>
+        <section id="intro" class="avatar-accent">
+            <div class="float-portrait">
+                <img src="assets/portrait.png" alt="CaptainGimpy 16-bit portrait">
             </div>
+            <h2>Welcome</h2>
+            <p>This is my personal blog hosting experiments, AI research, technical deep‑dives, and occasional rants. Everything here is written by me, styled in 16‑bit cyberpunk aesthetic. No paywalls, no tracking.</p>
+            <p><strong>Featured project:</strong> <a href="https://captaingimpy.github.io/disability-benefits-cliff/" target="_blank">Disability Benefits Cliff</a> — interactive data visualization exposing structural failures in SSI/SSDI programs.</p>
         </section>
         <section id="articles">
-            <h2>Articles (13)</h2>
+            <div class="articles-header">
+                <div class="mini-portrait">
+                    <img src="assets/portrait.png" alt="">
+                </div>
+                <h2>Articles (11)</h2>
+            </div>
             <div class="articles-grid">
                 
-                <div class="article-card" data-tags="tts voice-cloning tools" data-file="dots-tts-gui.md">
-                        <h2>Dots TTS GUI — Long-Form Voice Cloning Wrapper</h2>
-                        <div class="article-meta">
-                            <span class="date">Aug 2026</span>
-                            <span class="format">.MD</span>
-                        </div>
-                        <p class="article-description">Building a Gradio wrapper around Dots TTS and fixing the model config defaults that were breaking everything.</p>
-                        <a href="articles/dots-tts-gui.md" class="article-link">Read Article</a>
-                    </div>
-    
-                    <div class="article-card" data-tags="disability legislation systems thinking" data-file="the-math-of-staying.html">
-        <h2>The Math of Staying</h2>
-        <div class="article-meta">
-            <span class="date">Aug 2026</span>
-            <span class="format">.HTML</span>
-        </div>
-        <p class="article-description">Why working is a losing bet when the system is designed to filter you out.</p>
-        <a href="the-math-of-staying.html" class="article-link">Read Article</a>
-    </div>
-    
     <div class="article-card" data-tags="blender research" data-file="blender-mcp-geometry-nodes-research.md">
         <h2>Blender MCP Geometry Nodes Research</h2>
         <div class="article-meta">
@@ -90,12 +123,12 @@
     </div>
     
     <div class="article-card" data-tags="hermes obsidian research" data-file="hermes-obsidian-vault-memory-research.html">
-        <h2>Hermes Agent x Obsidian Vault — Memory &amp; Skill Architecture Research</h2>
+        <h2>Hermes Agent × Obsidian Vault — Memory &amp; Skill Architecture Research</h2>
         <div class="article-meta">
             <span class="date">Aug 2026</span>
             <span class="format">.HTML</span>
         </div>
-        <p class="article-description">Research article on Hermes Agent x Obsidian Vault </p>
+        <p class="article-description">Research article on Hermes Agent × Obsidian Vault </p>
         <a href="articles/hermes-obsidian-vault-memory-research.html" class="article-link">Read Article</a>
     </div>
     

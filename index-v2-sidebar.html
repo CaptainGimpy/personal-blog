@@ -3,17 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaptainGimpy — CP2077 Blog</title>
+    <title>CaptainGimpy — 16‑bit Cyberpunk Blog</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕹️</text></svg>">
+    <style>
+        .intro-with-portrait {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .intro-with-portrait .portrait {
+            flex-shrink: 0;
+        }
+        .intro-with-portrait .portrait img {
+            width: 180px;
+            height: auto;
+            border-radius: 10px;
+            border: 2px solid #f0f;
+            box-shadow: 0 0 16px rgba(255, 0, 255, 0.35), 0 0 32px rgba(255, 0, 255, 0.1);
+            image-rendering: pixelated;
+        }
+        .intro-with-portrait .intro-text {
+            flex: 1;
+        }
+        .intro-with-portrait .intro-text h2 {
+            margin-top: 0;
+        }
+        @media (max-width: 640px) {
+            .intro-with-portrait {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
         <h1>CaptainGimpy</h1>
-        <p class="tagline">CP2077 aesthetic — experiments, research, musings</p>
+        <p class="tagline">16‑bit meets Cyberpunk — experiments, research, musings</p>
         <nav>
             <a href="#articles">Articles</a>
             <a href="about.html">About</a>
@@ -29,36 +59,15 @@
                 </div>
                 <div class="intro-text">
                     <h2>Welcome</h2>
-                    <p>This is my personal blog hosting experiments, AI research, technical deep-dives, and occasional rants. Everything here is written by me, styled in CP2077. No paywalls, no tracking.</p>
+                    <p>This is my personal blog hosting experiments, AI research, technical deep‑dives, and occasional rants. Everything here is written by me, styled in 16‑bit cyberpunk aesthetic. No paywalls, no tracking.</p>
                     <p><strong>Featured project:</strong> <a href="https://captaingimpy.github.io/disability-benefits-cliff/" target="_blank">Disability Benefits Cliff</a> — interactive data visualization exposing structural failures in SSI/SSDI programs.</p>
-                    <p><strong>New article:</strong> <a href="articles/dots-tts-gui.md">Dots TTS GUI</a> — building a long-form voice cloning wrapper because the defaults don't work.</p>
                 </div>
             </div>
         </section>
         <section id="articles">
-            <h2>Articles (13)</h2>
+            <h2>Articles (11)</h2>
             <div class="articles-grid">
                 
-                <div class="article-card" data-tags="tts voice-cloning tools" data-file="dots-tts-gui.md">
-                        <h2>Dots TTS GUI — Long-Form Voice Cloning Wrapper</h2>
-                        <div class="article-meta">
-                            <span class="date">Aug 2026</span>
-                            <span class="format">.MD</span>
-                        </div>
-                        <p class="article-description">Building a Gradio wrapper around Dots TTS and fixing the model config defaults that were breaking everything.</p>
-                        <a href="articles/dots-tts-gui.md" class="article-link">Read Article</a>
-                    </div>
-    
-                    <div class="article-card" data-tags="disability legislation systems thinking" data-file="the-math-of-staying.html">
-        <h2>The Math of Staying</h2>
-        <div class="article-meta">
-            <span class="date">Aug 2026</span>
-            <span class="format">.HTML</span>
-        </div>
-        <p class="article-description">Why working is a losing bet when the system is designed to filter you out.</p>
-        <a href="the-math-of-staying.html" class="article-link">Read Article</a>
-    </div>
-    
     <div class="article-card" data-tags="blender research" data-file="blender-mcp-geometry-nodes-research.md">
         <h2>Blender MCP Geometry Nodes Research</h2>
         <div class="article-meta">
@@ -90,12 +99,12 @@
     </div>
     
     <div class="article-card" data-tags="hermes obsidian research" data-file="hermes-obsidian-vault-memory-research.html">
-        <h2>Hermes Agent x Obsidian Vault — Memory &amp; Skill Architecture Research</h2>
+        <h2>Hermes Agent × Obsidian Vault — Memory &amp; Skill Architecture Research</h2>
         <div class="article-meta">
             <span class="date">Aug 2026</span>
             <span class="format">.HTML</span>
         </div>
-        <p class="article-description">Research article on Hermes Agent x Obsidian Vault </p>
+        <p class="article-description">Research article on Hermes Agent × Obsidian Vault </p>
         <a href="articles/hermes-obsidian-vault-memory-research.html" class="article-link">Read Article</a>
     </div>
     
